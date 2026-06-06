@@ -155,37 +155,4 @@ class AuthController {
     Response::json(['error' => $e->getMessage()], $statusCode);
 }
     }
-
-    public function dashboard() {
-        $tenantId = $_SESSION['current_tenant_id'] ?? null;
-        $db = Database::getConnection();
-        $data = [
-            'total_patients' => 0,
-            'total_appointments' => 0,
-            'total_invoices' => 0,
-            'pending_invoices' => 0,
-            'appointments_by_status' => []
-        ];
-
-        if ($tenantId) {
-            $stmt = $db->prepare('SELECT COUNT(*) FROM patients WHERE tenant_id = :tenant_id AND is_deleted = 0');
-            $stmt->execute(['tenant_id' => $tenantId]);
-            $data['total_patients'] = (int) $stmt->fetchColumn();
-
-            $stmt = $db->prepare('SELECT status, COUNT(*) AS count FROM appointments WHERE tenant_id = :tenant_id AND is_cancelled = 0 GROUP BY status');
-            $stmt->execute(['tenant_id' => $tenantId]);
-            $data['appointments_by_status'] = $stmt->fetchAll();
-            $data['total_appointments'] = array_sum(array_column($data['appointments_by_status'], 'count'));
-
-            $stmt = $db->prepare('SELECT COUNT(*) FROM invoices WHERE tenant_id = :tenant_id');
-            $stmt->execute(['tenant_id' => $tenantId]);
-            $data['total_invoices'] = (int) $stmt->fetchColumn();
-
-            $stmt = $db->prepare('SELECT COUNT(*) FROM invoices WHERE tenant_id = :tenant_id AND status = :status');
-            $stmt->execute(['tenant_id' => $tenantId, 'status' => 'pending']);
-            $data['pending_invoices'] = (int) $stmt->fetchColumn();
-        }
-
-        Response::json(['dashboard' => $data], 200);
-    }
 }
