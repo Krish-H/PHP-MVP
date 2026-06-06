@@ -2,6 +2,7 @@
 
 namespace App\Middleware;
 
+use App\Helpers\Request;
 use App\Helpers\Response;
 use App\Security\Csrf;
 
@@ -15,12 +16,10 @@ class CsrfMiddleware {
         $headers = getallheaders();
         $token = '';
 
-        // Check header first
         if (isset($headers['X-CSRF-TOKEN'])) {
             $token = $headers['X-CSRF-TOKEN'];
         } else {
-            // Check body if present
-            $body = json_decode(file_get_contents('php://input'), true);
+            $body = Request::body();
             if (isset($body['csrf_token'])) {
                 $token = $body['csrf_token'];
             }

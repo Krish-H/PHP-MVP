@@ -2,19 +2,46 @@
 
 // api.php
 
+use App\Config\Roles;
 use App\Middleware\CsrfMiddleware;
 use App\Middleware\AuthMiddleware;
+use App\Middleware\RoleMiddleware;
 
 /** @var \App\Core\Router $router */
 
 // Public routes
 $router->get('/api/csrf-token', 'AuthController@getCsrfToken');
-
-// Registration and Login (Requires CSRF)
 $router->post('/api/register', 'AuthController@register', [CsrfMiddleware::class]);
 $router->post('/api/login', 'AuthController@login', [CsrfMiddleware::class]);
+$router->post('/api/refresh', 'AuthController@refresh', [CsrfMiddleware::class]);
 
-// Protected routes (Requires Auth AND CSRF)
-// Example for getting current user profile
+// Protected auth routes
+$router->post('/api/logout', 'AuthController@logout', [AuthMiddleware::class, CsrfMiddleware::class]);
 $router->get('/api/profile', 'AuthController@profile', [AuthMiddleware::class]);
+$router->get('/api/dashboard', 'AuthController@dashboard', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
+
+// Patient management
+$router->get('/api/patients', 'PatientController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
+$router->post('/api/patients', 'PatientController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
+$router->get('/api/patients/{id}', 'PatientController@show', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
+$router->put('/api/patients/{id}', 'PatientController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
+$router->delete('/api/patients/{id}', 'PatientController@destroy', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
+
+// Appointment management
+$router->get('/api/appointments', 'AppointmentController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
+$router->post('/api/appointments', 'AppointmentController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
+$router->get('/api/appointments/{id}', 'AppointmentController@show', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
+$router->put('/api/appointments/{id}', 'AppointmentController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
+$router->delete('/api/appointments/{id}', 'AppointmentController@destroy', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
+
+// Billing management
+$router->get('/api/invoices', 'BillingController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::PATIENT]]]);
+$router->post('/api/invoices', 'BillingController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::PATIENT]]]);
+$router->put('/api/invoices/{id}', 'BillingController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::PATIENT]]]);
+
+// Staff management
+$router->get('/api/staff', 'DoctorController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->post('/api/staff', 'DoctorController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->put('/api/staff/{id}', 'DoctorController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->delete('/api/staff/{id}', 'DoctorController@destroy', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 

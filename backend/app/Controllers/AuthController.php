@@ -2,118 +2,190 @@
 
 namespace App\Controllers;
 
+use App\Config\Database;
+use App\Helpers\Request;
 use App\Helpers\Response;
 use App\Helpers\Validator;
 use App\Services\AuthService;
-use App\Security\Crypto;
 use App\Security\Csrf;
 use Exception;
 
 class AuthController {
-    
     private $authService;
 
     public function __construct() {
         $this->authService = new AuthService();
     }
 
-    // Endpoint to get a CSRF token for the very first request
     public function getCsrfToken() {
         Response::json(['csrf_token' => Csrf::generateToken()]);
     }
 
     public function register() {
-        $body = json_decode(file_get_contents('php://input'), true);
+        $data = Request::body();
 
-        if (!isset($body['payload'])) {
-            Response::json(['error' => 'Missing encrypted payload'], 400);
-        }
-
-        // Decrypt the payload
-        $data = Crypto::decrypt($body['payload']);
         if (!is_array($data)) {
-            Response::json(['error' => 'Invalid encrypted data'], 400);
+            Response::json(['error' => 'Invalid request body'], 400);
         }
 
-        // Validate required fields
         if (!Validator::required($data, ['email', 'password'])) {
             Response::json(['error' => 'Email and password are required'], 400);
         }
 
-        // Validate email format
         if (!Validator::email($data['email'])) {
             Response::json(['error' => 'Invalid email format'], 400);
         }
 
-        // Validate password length
         if (!Validator::minLength($data['password'], 8)) {
             Response::json(['error' => 'Password must be at least 8 characters long'], 400);
         }
 
         try {
-            // Delegate business logic to Service
             $result = $this->authService->registerUser($data);
-
-            // Store Access Token in Session
-            $_SESSION['access_token'] = $result['access_token'];
 
             Response::json([
                 'message' => 'Registration successful',
                 'user_id' => $result['user_id']
-            ], 201, true);
-
-        } catch (Exception $e) {
-            $statusCode = $e->getCode() ?: 500;
-            Response::json(['error' => $e->getMessage()], $statusCode);
-        }
+            ], 201);
+        }catch (Exception $e) {
+    // Ensure the status code is actually a valid HTTP integer, otherwise default to 500
+    $code = $e->getCode();
+    $statusCode = (is_numeric($code) && $code >= 100 && $code < 600) ? (int)$code : 500;
+    
+    Response::json(['error' => $e->getMessage()], $statusCode);
+}
     }
 
     public function login() {
-        $body = json_decode(file_get_contents('php://input'), true);
+        $data = Request::body();
 
-        if (!isset($body['payload'])) {
-            Response::json(['error' => 'Missing encrypted payload'], 400);
+        if (!is_array($data)) {
+            Response::json(['error' => 'Invalid request body'], 400);
         }
-
-        $data = Crypto::decrypt($body['payload']);
 
         if (!Validator::required($data, ['email', 'password'])) {
             Response::json(['error' => 'Email and password are required'], 400);
         }
 
         try {
-            // Delegate business logic to Service
             $result = $this->authService->loginUser($data);
-
-            // Store Access Token in Session
-            $_SESSION['access_token'] = $result['tokens']['access_token'];
+            $this->setRefreshTokenCookie($result['tokens']['refresh_token']);
 
             Response::json([
                 'message' => 'Login successful',
-                'user' => $result['user']
-            ], 200, true);
-
+                'user' => $result['user'],
+                'access_token' => $result['tokens']['access_token']
+            ], 200);
         } catch (Exception $e) {
-            $statusCode = $e->getCode() ?: 500;
+            $code = $e->getCode();
+            $statusCode = (is_numeric($code) && $code >= 100 && $code < 600) ? (int)$code : 500;
             Response::json(['error' => $e->getMessage()], $statusCode);
         }
     }
 
-    public function profile() {
-        $userId = $_SESSION['current_user_id'];
-        
-        try {
-            // Delegate business logic to Service
-            $user = $this->authService->getUserProfile($userId);
+    public function refresh() {
+        $refreshToken = $_COOKIE['refresh_token'] ?? null;
 
-            Response::json([
-                'message' => 'Profile retrieved',
-                'user' => $user
-            ], 200, true);
-
-        } catch (Exception $e) {
-            $statusCode = $e->getCode() ?: 500;
-            Response::json(['error' => $e->getMessage()], $statusCode);
+        if (!$refreshToken) {
+            Response::json(['error' => 'Refresh token is required'], 401);
         }
+
+        try {
+            $tokens = $this->authService->refreshAccessToken($refreshToken);
+            $this->setRefreshTokenCookie($tokens['refresh_token']);
+
+            Response::json(['message' => 'Token refreshed', 'access_token' => $tokens['access_token']], 200);
+        }catch (Exception $e) {
+    // Ensure the status code is actually a valid HTTP integer, otherwise default to 500
+    $code = $e->getCode();
+    $statusCode = (is_numeric($code) && $code >= 100 && $code < 600) ? (int)$code : 500;
+    
+    Response::json(['error' => $e->getMessage()], $statusCode);
+}
+    }
+
+    public function logout() {
+        try {
+            $userId = $_SESSION['current_user_id'] ?? null;
+            if ($userId) {
+                $this->authService->logout($userId);
+            }
+            unset($_SESSION['access_token'], $_SESSION['current_user_id'], $_SESSION['current_tenant_id'], $_SESSION['current_role_id']);
+            $this->clearRefreshTokenCookie();
+            Response::json(['message' => 'Logged out successfully'], 200);
+        }catch (Exception $e) {
+    // Ensure the status code is actually a valid HTTP integer, otherwise default to 500
+    $code = $e->getCode();
+    $statusCode = (is_numeric($code) && $code >= 100 && $code < 600) ? (int)$code : 500;
+    
+    Response::json(['error' => $e->getMessage()], $statusCode);
+}
+    }
+
+    private function setRefreshTokenCookie($refreshToken) {
+        setcookie('refresh_token', $refreshToken, [
+            'expires' => time() + (30 * 24 * 60 * 60),
+            'path' => '/',
+            'secure' => false,
+            'httponly' => true,
+            'samesite' => 'Strict'
+        ]);
+    }
+
+    private function clearRefreshTokenCookie() {
+        setcookie('refresh_token', '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'secure' => false,
+            'httponly' => true,
+            'samesite' => 'Strict'
+        ]);
+    }
+
+    public function profile() {
+        try {
+            $userId = $_SESSION['current_user_id'];
+            $user = $this->authService->getUserProfile($userId);
+            Response::json(['message' => 'Profile retrieved', 'user' => $user], 200);
+        }catch (Exception $e) {
+    // Ensure the status code is actually a valid HTTP integer, otherwise default to 500
+    $code = $e->getCode();
+    $statusCode = (is_numeric($code) && $code >= 100 && $code < 600) ? (int)$code : 500;
+    
+    Response::json(['error' => $e->getMessage()], $statusCode);
+}
+    }
+
+    public function dashboard() {
+        $tenantId = $_SESSION['current_tenant_id'] ?? null;
+        $db = Database::getConnection();
+        $data = [
+            'total_patients' => 0,
+            'total_appointments' => 0,
+            'total_invoices' => 0,
+            'pending_invoices' => 0,
+            'appointments_by_status' => []
+        ];
+
+        if ($tenantId) {
+            $stmt = $db->prepare('SELECT COUNT(*) FROM patients WHERE tenant_id = :tenant_id AND is_deleted = 0');
+            $stmt->execute(['tenant_id' => $tenantId]);
+            $data['total_patients'] = (int) $stmt->fetchColumn();
+
+            $stmt = $db->prepare('SELECT status, COUNT(*) AS count FROM appointments WHERE tenant_id = :tenant_id AND is_cancelled = 0 GROUP BY status');
+            $stmt->execute(['tenant_id' => $tenantId]);
+            $data['appointments_by_status'] = $stmt->fetchAll();
+            $data['total_appointments'] = array_sum(array_column($data['appointments_by_status'], 'count'));
+
+            $stmt = $db->prepare('SELECT COUNT(*) FROM invoices WHERE tenant_id = :tenant_id');
+            $stmt->execute(['tenant_id' => $tenantId]);
+            $data['total_invoices'] = (int) $stmt->fetchColumn();
+
+            $stmt = $db->prepare('SELECT COUNT(*) FROM invoices WHERE tenant_id = :tenant_id AND status = :status');
+            $stmt->execute(['tenant_id' => $tenantId, 'status' => 'pending']);
+            $data['pending_invoices'] = (int) $stmt->fetchColumn();
+        }
+
+        Response::json(['dashboard' => $data], 200);
     }
 }

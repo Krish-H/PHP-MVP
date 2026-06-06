@@ -40,5 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $router = new Router();
 require __DIR__ . '/../app/Routes/api.php';
 
-// Dispatch
-$router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
+$uri = isset($_GET['url']) ? '/' . rtrim($_GET['url'], '/') : '/';
+
+$router->dispatch($uri, $_SERVER['REQUEST_METHOD']);

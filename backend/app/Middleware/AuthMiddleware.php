@@ -3,33 +3,50 @@
 namespace App\Middleware;
 
 use App\Helpers\Response;
-use App\Security\JwtAuth;
+use App\Security\JWT;
 
 class AuthMiddleware {
     public function handle() {
-        // Check if token exists in session
-        if (!isset($_SESSION['access_token'])) {
-            // Fallback: check Authorization header for stateless testing if needed
-            $headers = getallheaders();
-            if (!isset($headers['Authorization'])) {
-                Response::json(['error' => 'Unauthorized - No token provided'], 401);
-            }
-            $authHeader = $headers['Authorization'];
-            $token = str_replace('Bearer ', '', $authHeader);
-        } else {
-            $token = $_SESSION['access_token'];
+        $authorizationHeader = $this->getAuthorizationHeader();
+
+        if (!$authorizationHeader) {
+            Response::json(['error' => 'Unauthorized'], 401);
         }
 
-        $decoded = JwtAuth::verifyToken($token);
+        if (!preg_match('/^Bearer\s+(.+)$/i', trim($authorizationHeader), $matches)) {
+            Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $token = $matches[1];
+        $decoded = JWT::verifyToken($token);
 
         if (!$decoded) {
-            Response::json(['error' => 'Unauthorized - Invalid or expired token'], 401);
+            Response::json(['error' => 'Unauthorized'], 401);
         }
 
-        // Store user details in request context or session for later use
-        $_SESSION['current_user_id'] = $decoded['user_id'];
-        if(isset($decoded['tenant_id'])) {
-            $_SESSION['current_tenant_id'] = $decoded['tenant_id'];
+        $_SESSION['current_user_id'] = $decoded['user_id'] ?? null;
+        $_SESSION['current_tenant_id'] = $decoded['tenant_id'] ?? null;
+        $_SESSION['current_role_id'] = $decoded['role_id'] ?? null;
+    }
+
+    private function getAuthorizationHeader() {
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            foreach ($headers as $name => $value) {
+                if (strtolower($name) === 'authorization') {
+                    return $value;
+                }
+            }
         }
+
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            return $_SERVER['HTTP_AUTHORIZATION'];
+        }
+
+        if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            return $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        }
+
+        return null;
     }
 }

@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Repositories\UserRepository;
 use App\Repositories\TokenRepository;
-use App\Security\JwtAuth;
+use App\Security\JWT;
 use Exception;
 
 class AuthService {
@@ -29,7 +29,9 @@ class AuthService {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         $userId = $this->userRepo->create($email, $hashedPassword, $roleId, $tenantId);
 
-        return $this->generateUserTokens($userId, $tenantId);
+        return [
+            'user_id' => $userId
+        ];
     }
 
     public function loginUser($data) {
@@ -44,7 +46,7 @@ class AuthService {
 
         $this->tokenRepo->revokeAllForUser($user['id']);
 
-        $tokens = $this->generateUserTokens($user['id'], $user['tenant_id']);
+        $tokens = $this->generateUserTokens($user['id'], $user['tenant_id'], $user['role_id']);
         
         return [
             'tokens' => $tokens,
@@ -57,9 +59,43 @@ class AuthService {
         ];
     }
 
-    private function generateUserTokens($userId, $tenantId) {
-        $accessToken = JwtAuth::generateAccessToken($userId, $tenantId);
-        $refreshToken = JwtAuth::generateRefreshToken($userId);
+    public function refreshAccessToken($refreshToken) {
+        $tokenRow = $this->tokenRepo->findValidByToken($refreshToken);
+        if (!$tokenRow) {
+            throw new Exception('Refresh token invalid or expired', 401);
+        }
+
+        $decoded = JWT::verifyToken($refreshToken);
+        if (!$decoded) {
+            $this->tokenRepo->revokeById($tokenRow['id']);
+            throw new Exception('Refresh token invalid or expired', 401);
+        }
+
+        $user = $this->userRepo->findById($decoded['user_id']);
+        if (!$user) {
+            throw new Exception('User not found', 404);
+        }
+
+        $this->tokenRepo->revokeById($tokenRow['id']);
+        $tokens = $this->generateUserTokens($user['id'], $user['tenant_id'], $user['role_id']);
+
+        return $tokens;
+    }
+
+    public function logout($userId) {
+        $this->tokenRepo->revokeAllForUser($userId);
+        unset($_SESSION['access_token'], $_SESSION['current_user_id'], $_SESSION['current_role_id'], $_SESSION['current_tenant_id']);
+
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
+
+        return true;
+    }
+
+    private function generateUserTokens($userId, $tenantId, $roleId) {
+        $accessToken = JWT::generateAccessToken($userId, $tenantId, $roleId);
+        $refreshToken = JWT::generateRefreshToken($userId);
 
         $this->tokenRepo->store($userId, $refreshToken);
 

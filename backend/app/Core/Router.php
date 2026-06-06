@@ -24,6 +24,14 @@ class Router {
         $this->add('POST', $uri, $action, $middlewares);
     }
 
+    public function put($uri, $action, $middlewares = []) {
+        $this->add('PUT', $uri, $action, $middlewares);
+    }
+
+    public function delete($uri, $action, $middlewares = []) {
+        $this->add('DELETE', $uri, $action, $middlewares);
+    }
+
     public function dispatch($requestUri, $requestMethod) {
         $parsedUrl = parse_url($requestUri);
         $path = $parsedUrl['path'];
@@ -34,22 +42,53 @@ class Router {
         }
 
         foreach ($this->routes as $route) {
-            if ($route['uri'] === $path && $route['method'] === $requestMethod) {
-                // Execute Middlewares
-                foreach ($route['middlewares'] as $middleware) {
+            if ($route['method'] !== $requestMethod) {
+                continue;
+            }
+
+            $pattern = preg_replace_callback('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', function ($matches) {
+                return '(?P<' . $matches[1] . '>[^/]+)';
+            }, $route['uri']);
+
+            $pattern = '#^' . $pattern . '$#';
+            $matches = [];
+
+            if (!preg_match($pattern, $path, $matches)) {
+                continue;
+            }
+
+            // Extract route parameters
+            $params = [];
+            foreach ($matches as $key => $value) {
+                if (!is_int($key)) {
+                    $params[$key] = $value;
+                }
+            }
+
+            // Execute Middlewares
+            foreach ($route['middlewares'] as $middleware) {
+                if (is_array($middleware) && isset($middleware[0])) {
+                    $middlewareClass = $middleware[0];
+                    $middlewareArgs = $middleware[1] ?? [];
+                    $middlewareInstance = new $middlewareClass();
+                    $middlewareInstance->handle($middlewareArgs);
+                } else {
                     $middlewareInstance = new $middleware();
                     $middlewareInstance->handle();
                 }
+            }
 
-                // Execute Controller
-                list($controller, $method) = explode('@', $route['action']);
-                $controllerClass = "App\\Controllers\\$controller";
-                
-                if (class_exists($controllerClass) && method_exists($controllerClass, $method)) {
-                    $instance = new $controllerClass();
+            list($controller, $method) = explode('@', $route['action']);
+            $controllerClass = "App\\Controllers\\$controller";
+
+            if (class_exists($controllerClass) && method_exists($controllerClass, $method)) {
+                $instance = new $controllerClass();
+                if (!empty($params)) {
+                    call_user_func_array([$instance, $method], [$params]);
+                } else {
                     $instance->$method();
-                    return;
                 }
+                return;
             }
         }
 
