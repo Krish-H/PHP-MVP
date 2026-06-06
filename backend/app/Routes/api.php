@@ -45,3 +45,11 @@ $router->post('/api/staff', 'DoctorController@store', [AuthMiddleware::class, Cs
 $router->put('/api/staff/{id}', 'DoctorController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->delete('/api/staff/{id}', 'DoctorController@destroy', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 
+// User management
+$router->get('/api/users', 'UserController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->get('/api/users/{id}', 'UserController@show', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->post('/api/users', 'UserController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->put('/api/users/{id}', 'UserController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->delete('/api/users/{id}', 'UserController@destroy', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+
+

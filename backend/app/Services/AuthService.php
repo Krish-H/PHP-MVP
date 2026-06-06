@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Config\Roles;
 use App\Repositories\UserRepository;
 use App\Repositories\TokenRepository;
 use App\Security\JWT;
@@ -19,8 +20,8 @@ class AuthService {
     public function registerUser($data) {
         $email = $data['email'] ?? null;
         $password = $data['password'] ?? null;
-        $roleId = $data['role_id'] ?? 1;
-        $tenantId = $data['tenant_id'] ?? 1;
+        $roleId = Roles::PATIENT;
+        $tenantId = 1;
 
         if ($this->userRepo->findByEmail($email)) {
             throw new Exception('User already exists', 409);
