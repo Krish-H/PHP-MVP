@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Config\Database;
+<<<<<<< Updated upstream
 use App\Config\Env;
 use App\Security\AES;
 
@@ -173,12 +174,48 @@ class PatientRepository {
             'blood_group'       => !empty($data['blood_group'])       ? AES::encrypt($data['blood_group'],       $this->key) : null,
             'medical_history'   => !empty($data['medical_history'])   ? AES::encrypt($data['medical_history'],   $this->key) : null,
             'emergency_contact' => !empty($data['emergency_contact']) ? AES::encrypt($data['emergency_contact'], $this->key) : null,
+=======
+use PDO;
+
+class PatientRepository {
+    private $db;
+
+    public function __construct() {
+        $this->db = Database::getConnection();
+    }
+
+    /**
+     * Insert a new patient record (PHI already encrypted by service layer).
+     */
+    public function create(array $data, int $tenantId, int $userId): int {
+        $sql = "INSERT INTO patients
+                    (tenant_id, user_id, name, dob, gender, phone, email,
+                     address, blood_group, medical_history, emergency_contact)
+                VALUES
+                    (:tenant_id, :user_id, :name, :dob, :gender, :phone, :email,
+                     :address, :blood_group, :medical_history, :emergency_contact)";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            ':tenant_id'         => $tenantId,
+            ':user_id'           => $userId,
+            ':name'              => $data['name'],
+            ':dob'               => $data['dob'],
+            ':gender'            => $data['gender'],
+            ':phone'             => $data['phone'],
+            ':email'             => $data['email'],
+            ':address'           => $data['address']           ?? null,
+            ':blood_group'       => $data['blood_group']       ?? null,
+            ':medical_history'   => $data['medical_history']   ?? null,
+            ':emergency_contact' => $data['emergency_contact'] ?? null,
+>>>>>>> Stashed changes
         ]);
 
         return (int) $this->db->lastInsertId();
     }
 
     /**
+<<<<<<< Updated upstream
      * Update an existing patient record.
      * Only fields present in $data are updated (PATCH-style).
      *
@@ -203,10 +240,57 @@ class PatientRepository {
                 $params[$field] = !empty($data[$field])
                     ? AES::encrypt($data[$field], $this->key)
                     : null;
+=======
+     * Fetch a single non-deleted patient scoped to the tenant.
+     */
+    public function findById(int $id, int $tenantId): ?array {
+        $sql = "SELECT * FROM patients
+                WHERE id = :id AND tenant_id = :tenant_id AND is_deleted = 0
+                LIMIT 1";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':id' => $id, ':tenant_id' => $tenantId]);
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    /**
+     * Fetch all non-deleted patients scoped to the tenant.
+     */
+    public function findAll(int $tenantId): array {
+        $sql = "SELECT * FROM patients
+                WHERE tenant_id = :tenant_id AND is_deleted = 0
+                ORDER BY created_at DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':tenant_id' => $tenantId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Update allowed fields (PHI already encrypted by service layer).
+     */
+    public function update(int $id, array $data, int $tenantId): bool {
+        $allowed = [
+            'name', 'dob', 'gender', 'phone', 'email',
+            'address', 'blood_group', 'medical_history', 'emergency_contact',
+        ];
+
+        $setClauses = [];
+        $params = [':id' => $id, ':tenant_id' => $tenantId];
+
+        foreach ($allowed as $field) {
+            if (array_key_exists($field, $data)) {
+                $setClauses[] = "$field = :$field";
+                $params[":$field"] = $data[$field];
+>>>>>>> Stashed changes
             }
         }
 
         if (empty($setClauses)) {
+<<<<<<< Updated upstream
             return false; // Nothing to update
         }
 
@@ -215,6 +299,14 @@ class PatientRepository {
                 WHERE id         = :id
                   AND tenant_id  = :tenant_id
                   AND is_deleted = 0';
+=======
+            return false;
+        }
+
+        $sql = "UPDATE patients
+                SET " . implode(', ', $setClauses) . "
+                WHERE id = :id AND tenant_id = :tenant_id AND is_deleted = 0";
+>>>>>>> Stashed changes
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -223,6 +315,7 @@ class PatientRepository {
     }
 
     /**
+<<<<<<< Updated upstream
      * Soft-delete a patient (sets is_deleted = 1, records deleted_at).
      * Hard deletes are never done — medical records must be preserved.
      *
@@ -244,3 +337,18 @@ class PatientRepository {
         return $stmt->rowCount() > 0;
     }
 }
+=======
+     * Soft-delete: mark is_deleted = 1 and set deleted_at timestamp.
+     */
+    public function softDelete(int $id, int $tenantId): bool {
+        $sql = "UPDATE patients
+                SET is_deleted = 1, deleted_at = NOW()
+                WHERE id = :id AND tenant_id = :tenant_id AND is_deleted = 0";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':id' => $id, ':tenant_id' => $tenantId]);
+
+        return $stmt->rowCount() > 0;
+    }
+}
+>>>>>>> Stashed changes
