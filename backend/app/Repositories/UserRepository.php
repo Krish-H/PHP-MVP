@@ -168,4 +168,12 @@ class UserRepository {
             ]
         ];
     }
+
+    public function updatePassword($userId, $hashedPassword) {
+        $stmt = $this->db->prepare('UPDATE users SET password_hash = :password_hash, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND deleted_at IS NULL');
+        return $stmt->execute([
+            'password_hash' => $hashedPassword,
+            'id' => $userId
+        ]);
+    }
 }
