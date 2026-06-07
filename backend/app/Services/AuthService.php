@@ -22,13 +22,17 @@ class AuthService {
         $password = $data['password'] ?? null;
         $roleId = Roles::PATIENT;
         $tenantId = 1;
+<<<<<<< HEAD
+=======
+        $name = $data['name'] ?? null;
+>>>>>>> c860b60 (remove encrypted_profile and clean repository)
 
         if ($this->userRepo->findByEmail($email)) {
             throw new Exception('User already exists', 409);
         }
 
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $userId = $this->userRepo->create($email, $hashedPassword, $roleId, $tenantId);
+        $userId = $this->userRepo->create($email, $hashedPassword, $roleId, $tenantId, 1, $name);
 
         return [
             'user_id' => $userId

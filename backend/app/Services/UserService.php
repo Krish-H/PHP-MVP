@@ -54,7 +54,11 @@ class UserService {
         }
 
         $passwordHash = Hash::make($data['password']);
+<<<<<<< HEAD
         $userId = $this->userRepo->create($data['email'], $passwordHash, $role, $tenantId, 1, null, $data['name']);
+=======
+        $userId = $this->userRepo->create($data['email'], $passwordHash, $role, $tenantId, 1, $data['name']);
+>>>>>>> c860b60 (remove encrypted_profile and clean repository)
 
         return $userId;
     }
