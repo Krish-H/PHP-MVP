@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Config\Database;
-use App\Security\AES;
 
 class UserRepository {
     private $db;
