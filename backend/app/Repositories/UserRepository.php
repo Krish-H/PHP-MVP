@@ -23,22 +23,10 @@ class UserRepository {
         return $stmt->fetch();
     }
 
-<<<<<<< HEAD
-    public function create($email, $passwordHash, $roleId, $tenantId, $isActive = 1, $encryptedProfile = null, $name = null) {
-        if ($encryptedProfile === null) {
-            $aesKey = getenv('AES_KEY') ?: 'DefaultFallbackKeyDoNotUseInProd';
-            $encryptedProfile = AES::encrypt(json_encode([]), $aesKey);
-        }
-
-        $stmt = $this->db->prepare('
-            INSERT INTO users (email, password_hash, role_id, tenant_id, is_active, encrypted_profile, name) 
-            VALUES (:email, :password_hash, :role_id, :tenant_id, :is_active, :encrypted_profile, :name)
-=======
     public function create($email, $passwordHash, $roleId, $tenantId, $isActive = 1, $name = null) {
         $stmt = $this->db->prepare('
             INSERT INTO users (email, password_hash, role_id, tenant_id, is_active, name) 
             VALUES (:email, :password_hash, :role_id, :tenant_id, :is_active, :name)
->>>>>>> c860b60 (remove encrypted_profile and clean repository)
         ');
         $stmt->execute([
             'email' => $email,
@@ -46,10 +34,6 @@ class UserRepository {
             'role_id' => $roleId,
             'tenant_id' => $tenantId,
             'is_active' => $isActive,
-<<<<<<< HEAD
-            'encrypted_profile' => $encryptedProfile,
-=======
->>>>>>> c860b60 (remove encrypted_profile and clean repository)
             'name' => $name
         ]);
         return $this->db->lastInsertId();
