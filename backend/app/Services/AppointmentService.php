@@ -27,7 +27,7 @@ class AppointmentService {
         $this->validateRequired($data, ['patient_id', 'provider_id', 'appointment_date', 'appointment_time']);
         $this->validateDateTimeFormat($data['appointment_date'], $data['appointment_time']);
 
-        if ($this->appointmentRepo->hasConflict(
+        if ($this->appointmentRepo->slotExists(
             (int) $data['provider_id'],
             $data['appointment_date'],
             $data['appointment_time']
@@ -80,12 +80,12 @@ class AppointmentService {
         if (isset($data['appointment_date']) || isset($data['appointment_time']) || isset($data['provider_id'])) {
             $this->validateDateTimeFormat($date, $time);
 
-            if ($this->appointmentRepo->hasConflict($providerId, $date, $time, $id)) {
+            if ($this->appointmentRepo->slotExists($providerId, $date, $time, $id)) {
                 throw new Exception('Provider already has an appointment at this date and time', 409);
             }
         }
 
-        $updated = $this->appointmentRepo->update($id, $data, $tenantId);
+        $updated = $this->appointmentRepo->update($id, $tenantId, $data);
 
         if (!$updated) {
             throw new Exception('No changes were made', 400);

@@ -23,7 +23,6 @@ class PatientRepository {
 
     public function __construct() {
         $this->db  = Database::getConnection();
-        // AES key loaded from .env — same key your TL uses project-wide
         $this->key = Env::get('AES_KEY');
     }
 
@@ -31,12 +30,6 @@ class PatientRepository {
     // READ
     // ----------------------------------------------------------------
 
-    /**
-     * Get all active (non-deleted) patients for a tenant.
-     *
-     * @param  int   $tenantId
-     * @return array  Array of decrypted patient rows
-     */
     public function findAll(int $tenantId): array {
         $stmt = $this->db->prepare(
             'SELECT * FROM patients
@@ -47,28 +40,11 @@ class PatientRepository {
         $stmt->execute(['tenant_id' => $tenantId]);
         $patients = $stmt->fetchAll();
 
-        // Decrypt PHI fields on every row before returning
-        return array_map(function($patient) {
-            $patient['name']              = AES::decrypt($patient['name'],              $this->key);
-            $patient['dob']               = AES::decrypt($patient['dob'],               $this->key);
-            $patient['gender']            = AES::decrypt($patient['gender'],            $this->key);
-            $patient['phone']             = AES::decrypt($patient['phone'],             $this->key);
-            $patient['email']             = AES::decrypt($patient['email'],             $this->key);
-            $patient['address']           = !empty($patient['address'])           ? AES::decrypt($patient['address'],           $this->key) : null;
-            $patient['blood_group']       = !empty($patient['blood_group'])       ? AES::decrypt($patient['blood_group'],       $this->key) : null;
-            $patient['medical_history']   = !empty($patient['medical_history'])   ? AES::decrypt($patient['medical_history'],   $this->key) : null;
-            $patient['emergency_contact'] = !empty($patient['emergency_contact']) ? AES::decrypt($patient['emergency_contact'], $this->key) : null;
-            return $patient;
+        return array_map(function ($patient) {
+            return $this->decryptPhi($patient);
         }, $patients);
     }
 
-    /**
-     * Find a single patient by ID, scoped to the tenant.
-     *
-     * @param  int $id
-     * @param  int $tenantId
-     * @return array|null  Decrypted row, or null if not found
-     */
     public function findById(int $id, int $tenantId): ?array {
         $stmt = $this->db->prepare(
             'SELECT * FROM patients
@@ -84,9 +60,102 @@ class PatientRepository {
             return null;
         }
 
-        // Decrypt PHI fields before returning
-        $patient['name']              = AES::decrypt($patient['name'],              $this->key);
-        $patient['dob']               = AES::decrypt($patient['dob'],               $this->key);
-        $patient['gender']            = AES::decrypt($patient['gender'],            $this->key);
-        $patient['phone']             = AES::decrypt($patient['phone'],             $this->key);
-        $patient['email']             = AES::decrypt($patient['email'],     
+        return $this->decryptPhi($patient);
+    }
+
+    // ----------------------------------------------------------------
+    // WRITE
+    // ----------------------------------------------------------------
+
+    public function create(array $data, int $tenantId, int $userId): int {
+        $stmt = $this->db->prepare(
+            'INSERT INTO patients
+             (tenant_id, user_id, name, dob, gender, phone, email,
+              address, blood_group, medical_history, emergency_contact,
+              created_at, updated_at)
+             VALUES
+             (:tenant_id, :user_id, :name, :dob, :gender, :phone, :email,
+              :address, :blood_group, :medical_history, :emergency_contact,
+              NOW(), NOW())'
+        );
+
+        $stmt->execute([
+            'tenant_id'         => $tenantId,
+            'user_id'           => $userId,
+            'name'              => AES::encrypt($data['name'],   $this->key),
+            'dob'               => AES::encrypt($data['dob'],    $this->key),
+            'gender'            => AES::encrypt($data['gender'], $this->key),
+            'phone'             => AES::encrypt($data['phone'],  $this->key),
+            'email'             => AES::encrypt($data['email'],  $this->key),
+            'address'           => !empty($data['address'])           ? AES::encrypt($data['address'],           $this->key) : null,
+            'blood_group'       => !empty($data['blood_group'])       ? AES::encrypt($data['blood_group'],       $this->key) : null,
+            'medical_history'   => !empty($data['medical_history'])   ? AES::encrypt($data['medical_history'],   $this->key) : null,
+            'emergency_contact' => !empty($data['emergency_contact']) ? AES::encrypt($data['emergency_contact'], $this->key) : null,
+        ]);
+
+        return (int) $this->db->lastInsertId();
+    }
+
+    public function update(int $id, int $tenantId, array $data): bool {
+        $setClauses = [];
+        $params     = ['id' => $id, 'tenant_id' => $tenantId];
+
+        $phiFields = ['name', 'dob', 'gender', 'phone', 'email',
+                      'address', 'blood_group', 'medical_history', 'emergency_contact'];
+
+        foreach ($data as $field => $value) {
+            if (in_array($field, $phiFields, true)) {
+                $setClauses[]   = "$field = :$field";
+                $params[$field] = AES::encrypt((string) $value, $this->key);
+            } else {
+                $setClauses[]   = "$field = :$field";
+                $params[$field] = $value;
+            }
+        }
+
+        if (empty($setClauses)) {
+            return false;
+        }
+
+        $setClauses[] = 'updated_at = NOW()';
+        $sql = 'UPDATE patients SET ' . implode(', ', $setClauses) .
+               ' WHERE id = :id AND tenant_id = :tenant_id AND is_deleted = 0';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Soft-delete: sets is_deleted = 1 and records deleted_at timestamp.
+     */
+    public function delete(int $id, int $tenantId): bool {
+        $stmt = $this->db->prepare(
+            'UPDATE patients
+             SET is_deleted = 1, deleted_at = NOW()
+             WHERE id = :id AND tenant_id = :tenant_id AND is_deleted = 0'
+        );
+        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    // ----------------------------------------------------------------
+    // PRIVATE HELPERS
+    // ----------------------------------------------------------------
+
+    private function decryptPhi(array $patient): array {
+        foreach (['name', 'dob', 'gender', 'phone', 'email'] as $field) {
+            $patient[$field] = AES::decrypt($patient[$field], $this->key);
+        }
+
+        foreach (['address', 'blood_group', 'medical_history', 'emergency_contact'] as $field) {
+            $patient[$field] = !empty($patient[$field])
+                ? AES::decrypt($patient[$field], $this->key)
+                : null;
+        }
+
+        return $patient;
+    }
+}
