@@ -59,26 +59,17 @@ WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'Receptionist');
 -- TABLE: users
 -- ============================================================
 
-CREATE TABLE IF NOT EXISTS users (
-id INT AUTO_INCREMENT PRIMARY KEY,
-tenant_id INT NOT NULL,
-role_id INT NOT NULL,
-
-
-email VARCHAR(191) NOT NULL UNIQUE,
-password_hash VARCHAR(255) NOT NULL,
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-CONSTRAINT fk_users_tenant
-    FOREIGN KEY (tenant_id)
-    REFERENCES tenants(id),
-
-CONSTRAINT fk_users_role
-    FOREIGN KEY (role_id)
-    REFERENCES roles(id)
-
-
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id INT NOT NULL,
+    role_id INT NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active TINYINT(1) DEFAULT 1,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    name VARCHAR(100) DEFAULT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- ============================================================
