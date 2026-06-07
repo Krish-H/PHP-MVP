@@ -18,7 +18,7 @@ $router->post('/api/refresh', 'AuthController@refresh', [CsrfMiddleware::class])
 // Protected auth routes
 $router->post('/api/logout', 'AuthController@logout', [AuthMiddleware::class, CsrfMiddleware::class]);
 $router->get('/api/profile', 'AuthController@profile', [AuthMiddleware::class]);
-$router->get('/api/dashboard', 'AuthController@dashboard', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
+$router->get('/api/dashboard', 'DashboardController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
 
 // Patient management
 $router->get('/api/patients', 'PatientController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
@@ -44,4 +44,12 @@ $router->get('/api/staff', 'DoctorController@index', [AuthMiddleware::class, [Ro
 $router->post('/api/staff', 'DoctorController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->put('/api/staff/{id}', 'DoctorController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->delete('/api/staff/{id}', 'DoctorController@destroy', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+
+// User management
+$router->get('/api/users', 'UserController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->get('/api/users/{id}', 'UserController@show', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->post('/api/users', 'UserController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->put('/api/users/{id}', 'UserController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->delete('/api/users/{id}', 'UserController@destroy', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+
 

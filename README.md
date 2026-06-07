@@ -60,6 +60,7 @@ Body
 
 ```
 {
+  "name": "Admin User",
   "email": "admin@test.com",
   "password": "password123",
   "role_id": 1,
@@ -109,6 +110,7 @@ Response
   "message": "Login successful",
   "user": {
     "id": 1,
+    "name": "Admin User",
     "email": "admin@test.com",
     "role_id": 1,
     "tenant_id": 1
@@ -386,6 +388,7 @@ Returns the current user profile. Requires authentication via JWT token in sessi
   "message": "Profile retrieved",
   "user": {
     "id": 1,
+    "name": "Admin User",
     "email": "admin@test.com",
     "role_id": 1,
     "tenant_id": 1
@@ -464,11 +467,27 @@ Returns tenant-level dashboard metrics (patients, appointments, invoices).
 
 - `GET /api/staff` - List all staff members
 - `POST /api/staff` - Create new staff member
-  - **Request:** `{ "email": "doctor@test.com", "password": "securepass", "role_id": 2 }`
+  - **Request:** `{ "name": "Dr. Smith", "email": "doctor@test.com", "password": "securepass", "role_id": 2 }`
   - **Requires:** Admin role
 - `PUT /api/staff/{id}` - Update staff information
-  - **Request:** `{ "email": "doctor@test.com" }`
+  - **Request:** `{ "name": "Dr. Smith", "email": "doctor@test.com" }`
 - `DELETE /api/staff/{id}` - Deactivate staff member
+
+### User management
+
+- `GET /api/users` - List users (supports pagination & filtering)
+  - **Query Params:** `?page=1&limit=10&name=John&email=john@test.com`
+  - **Requires:** Admin role
+- `GET /api/users/{id}` - Get a specific user details
+  - **Requires:** Admin role
+- `POST /api/users` - Create a new user
+  - **Request:** `{ "name": "Jane Doe", "email": "jane@test.com", "password": "securepass", "role": 3 }`
+  - **Requires:** Admin role
+- `PUT /api/users/{id}` - Update a user's details
+  - **Request:** `{ "name": "Jane Doe", "email": "jane@test.com", "role": 3 }`
+  - **Requires:** Admin role
+- `DELETE /api/users/{id}` - Soft delete a user
+  - **Requires:** Admin role
 
 ## Notes
 
@@ -490,6 +509,7 @@ Returns tenant-level dashboard metrics (patients, appointments, invoices).
 **Body:**
 ```json
 {
+  "name": "Admin User",
   "email": "admin@test.com",
   "password": "password123",
   "tenant_id": 1,
