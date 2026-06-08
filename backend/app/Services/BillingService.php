@@ -18,7 +18,7 @@ class BillingService {
 
     public function listInvoices(int $tenantId, int $roleId, int $userId): array {
         if ($roleId === \App\Config\Roles::PATIENT) {
-            $patient = $this->patientRepo->findByUserId($userId, $tenantId);
+            $patient = $this->patientRepo->findByPatientUserId($userId, $tenantId);
             if (!$patient) {
                 return [];
             }
@@ -26,6 +26,14 @@ class BillingService {
         }
 
         return $this->billingRepo->findAll($tenantId);
+    }
+
+    public function getMyInvoices(int $userId, int $tenantId): array {
+        $patient = $this->patientRepo->findByPatientUserId($userId, $tenantId);
+        if (!$patient) {
+            throw new Exception('Patient mapping not found', 404);
+        }
+        return $this->billingRepo->findByPatientId($patient['id'], $tenantId);
     }
 
     public function createInvoice(array $data, int $tenantId): int {

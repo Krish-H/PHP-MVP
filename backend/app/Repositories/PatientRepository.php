@@ -81,6 +81,42 @@ class PatientRepository {
         return $this->decryptPhi($patient);
     }
 
+    public function findByPatientUserId(int $userId, int $tenantId): ?array {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM patients
+             WHERE patient_user_id = :patient_user_id
+               AND tenant_id  = :tenant_id
+               AND is_deleted = 0
+             LIMIT 1'
+        );
+        $stmt->execute(['patient_user_id' => $userId, 'tenant_id' => $tenantId]);
+        $patient = $stmt->fetch();
+
+        if (!$patient) {
+            return null;
+        }
+
+        return $this->decryptPhi($patient);
+    }
+
+    public function isPatientUserLinkedToAnother(int $patientUserId, int $tenantId, ?int $excludePatientId = null): bool {
+        $sql = 'SELECT COUNT(*) FROM patients
+                WHERE patient_user_id = :patient_user_id
+                  AND tenant_id = :tenant_id
+                  AND is_deleted = 0';
+        $params = ['patient_user_id' => $patientUserId, 'tenant_id' => $tenantId];
+
+        if ($excludePatientId !== null) {
+            $sql .= ' AND id != :exclude_id';
+            $params['exclude_id'] = $excludePatientId;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     // ----------------------------------------------------------------
     // WRITE
     // ----------------------------------------------------------------
@@ -88,11 +124,11 @@ class PatientRepository {
     public function create(array $data, int $tenantId, int $userId): int {
         $stmt = $this->db->prepare(
             'INSERT INTO patients
-             (tenant_id, user_id, name, dob, gender, phone, email,
+             (tenant_id, user_id, patient_user_id, name, dob, gender, phone, email,
               address, blood_group, medical_history, emergency_contact,
               created_at, updated_at)
              VALUES
-             (:tenant_id, :user_id, :name, :dob, :gender, :phone, :email,
+             (:tenant_id, :user_id, :patient_user_id, :name, :dob, :gender, :phone, :email,
               :address, :blood_group, :medical_history, :emergency_contact,
               NOW(), NOW())'
         );
@@ -100,6 +136,7 @@ class PatientRepository {
         $stmt->execute([
             'tenant_id'         => $tenantId,
             'user_id'           => $userId,
+            'patient_user_id'   => !empty($data['patient_user_id']) ? (int) $data['patient_user_id'] : null,
             'name'              => AES::encrypt($data['name'],   $this->key),
             'dob'               => AES::encrypt($data['dob'],    $this->key),
             'gender'            => AES::encrypt($data['gender'], $this->key),
@@ -125,6 +162,9 @@ class PatientRepository {
             if (in_array($field, $phiFields, true)) {
                 $setClauses[]   = "$field = :$field";
                 $params[$field] = AES::encrypt((string) $value, $this->key);
+            } elseif ($field === 'patient_user_id') {
+                $setClauses[]   = "$field = :$field";
+                $params[$field] = !empty($value) ? (int) $value : null;
             } else {
                 $setClauses[]   = "$field = :$field";
                 $params[$field] = $value;

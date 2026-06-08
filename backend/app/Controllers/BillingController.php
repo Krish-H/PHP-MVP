@@ -23,6 +23,18 @@ class BillingController {
         Response::json(['invoices' => $invoices], 200);
     }
 
+    public function myInvoices() {
+        try {
+            $invoices = $this->billingService->getMyInvoices(
+                $_SESSION['current_user_id'],
+                $_SESSION['current_tenant_id']
+            );
+            Response::json(['invoices' => $invoices], 200);
+        } catch (Exception $e) {
+            Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
+        }
+    }
+
     public function pendingSummary() {
         try {
             $summary = $this->billingService->getPendingSummary($_SESSION['current_tenant_id']);

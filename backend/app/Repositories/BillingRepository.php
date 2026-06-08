@@ -46,6 +46,10 @@ class BillingRepository {
         return $stmt->fetchAll();
     }
 
+    public function findByPatientId(int $patientId, int $tenantId): array {
+        return $this->findAllForPatient($tenantId, $patientId);
+    }
+
     public function findById(int $id, int $tenantId) {
         $stmt = $this->db->prepare('
             SELECT * FROM invoices
