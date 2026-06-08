@@ -1,471 +1,907 @@
-# PHP-MVP API Development Workflow
+# PHP-MVP Healthcare Management System - API Documentation
 
-## Base URL
+This document serves as a complete Postman-friendly API reference for the PHP-MVP Healthcare Management System.
 
-```
+All APIs are prefixed with the base URL:
+```http
 http://localhost/PHP-MVP/backend/public
 ```
 
 ---
 
-# Authentication Flow
-
-> The API uses JWT access tokens passed via the `Authorization: Bearer <token>` header and HttpOnly refresh tokens stored in cookies. CSRF tokens are still required for state-changing requests.
-
-## Step 1: Get CSRF Token
-
-Request
-
-```
-GET /api/csrf-token
-```
-
-Example
-
-```
-GET http://localhost/PHP-MVP/backend/public/api/csrf-token
-```
-
-Response
-
-```
-{
-  "csrf_token": "generated_token_here"
-}
-```
-
-Save:
-
-- `csrf_token`
-- `PHPSESSID` cookie (Postman stores cookies automatically)
+## Table of Contents
+1. [Authentication & Tenant Management](#authentication--tenant-management)
+2. [User Management](#user-management)
+3. [Patient Management](#patient-management)
+4. [Appointment Management](#appointment-management)
+5. [Dashboard](#dashboard)
+6. [Calendar API](#calendar-api)
+7. [Prescription & Pharmacy](#prescription--pharmacy)
+8. [Billing & Payment](#billing--payment)
+9. [Communication Module](#communication-module)
+10. [Staff Management](#staff-management)
 
 ---
 
-## Step 2: Register User
+## Authentication & Tenant Management
 
-Request
+### Register
 
-```
-POST /api/register
-```
-
-Headers
-
-```
-Content-Type: application/json
-X-CSRF-TOKEN: csrf_token
+#### Method
+```http
+POST
 ```
 
-Body
-
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/register
 ```
+
+#### Headers
+```json
+{
+  "Content-Type": "application/json"
+}
+```
+
+#### Request Body
+```json
 {
   "name": "Admin User",
-  "email": "admin@test.com",
-  "password": "password123",
+  "email": "admin@example.com",
+  "password": "Password123",
   "role_id": 1,
   "tenant_id": 1
 }
 ```
 
-Response
-
-```
+#### Success Response
+```json
 {
   "message": "Registration successful",
   "user_id": 1
 }
 ```
 
+#### Notes
+* Authentication: Not required
+* Allowed Roles: N/A
+* Validation Rules: Email must be unique. Password required. Tenant ID is required.
+
 ---
 
-## Step 3: Login
+### Login
 
-Request
-
-```
-POST /api/login
-```
-
-Headers
-
-```
-Content-Type: application/json
-X-CSRF-TOKEN: csrf_token
+#### Method
+```http
+POST
 ```
 
-Body
-
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/login
 ```
+
+#### Headers
+```json
 {
-  "email": "admin@test.com",
-  "password": "password123"
+  "Content-Type": "application/json"
 }
 ```
 
-Response
-
+#### Request Body
+```json
+{
+  "email": "admin@example.com",
+  "password": "Password123"
+}
 ```
+
+#### Success Response
+```json
 {
   "message": "Login successful",
   "user": {
     "id": 1,
     "name": "Admin User",
-    "email": "admin@test.com",
+    "email": "admin@example.com",
     "role_id": 1,
     "tenant_id": 1
   },
-  "access_token": "jwt_token_here"
+  "access_token": "eyJhbGciOiJIUzI1Ni...",
+  "refresh_token": "def456...",
+  "csrf_token": "a1b2c3d4e5f6..."
 }
 ```
 
-Save:
-
-- `access_token` (use this for `Authorization` header)
-
-Postman automatically stores:
-
-- `PHPSESSID`
-- `refresh_token` (HttpOnly cookie)
+#### Notes
+* Authentication: Not required
+* Allowed Roles: N/A
+* A `refresh_token` will also be set as an `HttpOnly` cookie automatically in Postman.
 
 ---
 
-# Protected Routes
+### Refresh Token
 
-All protected routes require the Authorization header:
-
-```
-Authorization: Bearer ACCESS_TOKEN
-```
-
-Example
-
-```
-Authorization: Bearer eyJhbGciOiJIUzI1Ni...
+#### Method
+```http
+POST
 ```
 
----
-
-# Profile API
-
-Request
-
-```
-GET /api/profile
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/refresh
 ```
 
-Headers
-
-```
-Authorization: Bearer ACCESS_TOKEN
-```
-
-Response
-
-```
+#### Headers
+```json
 {
-  "message": "Profile retrieved",
-  "user": {
-    ...
-  }
+  "Content-Type": "application/json"
 }
 ```
 
----
+#### Request Body
+*(No body required. Refresh token is read from HttpOnly cookie)*
 
-# Refresh Token Flow
-
-When access token expires:
-
-Request
-
-```
-POST /api/refresh
-```
-
-Headers
-
-```
-X-CSRF-TOKEN: csrf_token
-```
-
-No body required — the server reads the refresh token from the HttpOnly cookie.
-
-Response
-
-```
+#### Success Response
+```json
 {
   "message": "Token refreshed",
-  "access_token": "new_access_token"
+  "access_token": "eyJhbGciOiJIUzI1Ni...",
+  "csrf_token": "a1b2c3d4e5f6..."
 }
 ```
 
-Replace your old access token with the new one returned.
+#### Notes
+* Authentication: Cookie-based
+* Allowed Roles: All users
 
 ---
 
-# Logout
+### Logout
 
-Request
-
-```
-POST /api/logout
-```
-
-Headers
-
-```
-Authorization: Bearer ACCESS_TOKEN
-X-CSRF-TOKEN: csrf_token
+#### Method
+```http
+POST
 ```
 
-Response
-
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/logout
 ```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+*(Empty)*
+
+#### Success Response
+```json
 {
   "message": "Logged out successfully"
 }
 ```
 
-This will:
-
-- Revoke refresh tokens
-- Clear the refresh token cookie
-- Invalidate any authentication-related session values
+#### Notes
+* Authentication: Required
+* Allowed Roles: All users
 
 ---
 
-# Role IDs
+### Profile
 
-Use the following numeric role IDs when creating or testing users:
-
-- Admin: 1
-- Provider: 2
-- Nurse: 3
-- Patient: 4
-- Pharmacist: 5
-- Doctor: 6
-- Receptionist: 7
-
----
-
-# Patient Module API Rules
-
-Allowed Roles:
-
-- Provider
-- Nurse
-
-Authorization Required: YES
-
-Example Header
-
-```
-Authorization: Bearer ACCESS_TOKEN
+#### Method
+```http
+GET
 ```
 
-Create Patient
-
-```
-POST /api/patients
-```
-
-Body
-
-```
-{
-  "name": "John Doe",
-  "dob": "1995-10-20",
-  "gender": "Male",
-  "phone": "9999999999",
-  "email": "john@test.com",
-  "address": "123 Main St, City",
-  "blood_group": "O+",
-  "medical_history": "No known allergies",
-  "emergency_contact": "8888888888"
-}
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/profile
 ```
 
-Sensitive fields (PHI) must be encrypted before storing in the database and decrypted only when returning responses. Typical PHI fields include:
-
-- Name
-- DOB
-- Phone
-- Email
-- Medical history
-- Address
-
----
-
-# Appointment Module API Rules
-
-Allowed Roles:
-
-- Provider
-- Nurse
-- Patient
-
-Authorization Required: YES
-
-Create Appointment
-
-```
-POST /api/appointments
-```
-
-Body
-
-```
-{
-  "patient_id": 1,
-  "provider_id": 2,
-  "appointment_date": "2026-06-10",
-  "appointment_time": "10:00:00"
-}
-```
-
-Must validate on the server:
-
-- Provider exists
-- Patient exists
-- No overlapping appointment for the same provider
-
----
-
-# Calendar Module API Rules
-
-Allowed Roles:
-
-- Admin
-- Doctor
-- Nurse
-- Receptionist
-
-Authorization Required: YES
-
-Get Calendar Appointments (Single Day)
-
-```
-GET /api/calendar?date=2026-06-10
-```
-
-Get Calendar Appointments (Date Range)
-
-```
-GET /api/calendar?start_date=2026-06-01&end_date=2026-06-30
-```
-
-Get Appointment Tooltip Details
-
-```
-GET /api/calendar/appointments/{id}/tooltip
-```
-
----
-
-# RBAC Testing
-
-Admin Route
-
-```
-GET /api/staff
-```
-
-Allowed: Admin
-
-Forbidden: Provider, Nurse, Patient, Pharmacist, Receptionist
-
-Expected response when unauthorized by role:
-
-```
-{
-  "error": "Forbidden - insufficient permissions"
-}
-```
-
-Status Code: `403 Forbidden`
-
----
-
-# Development Rules
-
-1. Always create APIs following: Controller → Service → Repository → Database.
-2. Never write raw SQL inside Controllers.
-3. Always validate JWT, Role, and Tenant access for protected routes.
-4. Encrypt PHI before storing (Name, DOB, Phone, Email, Medical history, Address).
-5. Decrypt PHI only when returning responses.
-6. Use prepared statements for all DB access.
-7. Never trust client input; validate and sanitize everything.
-8. Test every API in Postman before pushing code.
-9. Create a feature branch for development.
-10. Raise a Pull Request to `main` after testing.
-
----
-
-If you'd like, I can also update example Postman collections or add a short local testing checklist.
+#### Headers
 ```json
 {
-  "message": "Token refreshed",
-  "tokens": {
-    "access_token": "eyJhbGc...",
-    "refresh_token": "eyJhbGc..."
-  }
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
 }
 ```
 
-### Authenticated endpoints
-
-#### GET /api/profile
-Returns the current user profile. Requires authentication via JWT token in session.
-
-**Response:**
+#### Success Response
 ```json
 {
   "message": "Profile retrieved",
   "user": {
     "id": 1,
     "name": "Admin User",
-    "email": "admin@test.com",
+    "email": "admin@example.com",
     "role_id": 1,
     "tenant_id": 1
   }
 }
 ```
 
-#### POST /api/change-password
-Allows an authenticated user to change their password. Requires authentication via JWT token.
+#### Notes
+* Authentication: Required
+* Allowed Roles: All users
 
-**Request:**
+---
+
+## User Management
+
+### List Users
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/users?page=1&limit=10&name=John&email=john@test.com
+```
+
+#### Headers
 ```json
 {
-  "current_password": "old_password123",
-  "new_password": "new_secure_password",
-  "confirm_password": "new_secure_password"
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
 }
 ```
 
-**Response:**
+#### Success Response
 ```json
 {
-  "success": true,
-  "message": "Password changed successfully"
+  "data": [
+    {
+      "id": 2,
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "role_id": 3
+    }
+  ],
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "limit": 10,
+    "total_pages": 1
+  }
 }
 ```
 
-#### POST /api/logout
-Invalidates refresh tokens and logs out the user.
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin
 
-**Response:**
+---
+
+### Get User
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/users/2
+```
+
+#### Headers
 ```json
 {
-  "message": "Logged out successfully"
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
 }
 ```
 
-#### GET /api/dashboard
-Returns tenant-level dashboard metrics (patients, appointments, invoices).
+#### Success Response
+```json
+{
+  "id": 2,
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "role_id": 3
+}
+```
 
-**Response:**
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin
+
+---
+
+### Create User
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/users
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "Password123",
+  "role": 3
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "User created",
+  "user_id": 2
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin
+* Validation Rules: Email must be unique within the tenant.
+
+---
+
+### Update User
+
+#### Method
+```http
+PUT
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/users/2
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "name": "Jane Doe Updated",
+  "email": "jane_updated@example.com",
+  "role": 4
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "User updated successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin
+
+---
+
+### Delete User
+
+#### Method
+```http
+DELETE
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/users/2
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+*(Empty)*
+
+#### Success Response
+```json
+{
+  "message": "User deleted successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin
+* Validation Rules: Uses soft-delete (`deleted_at`). Cannot delete yourself.
+
+---
+
+## Patient Management
+
+### List Patients
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/patients
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Success Response
+```json
+[
+  {
+    "id": 1,
+    "name": "John Doe",
+    "dob": "1990-01-01",
+    "gender": "Male",
+    "phone": "555-0100",
+    "email": "john@example.com"
+  }
+]
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse
+
+---
+
+### Get Patient
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/patients/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Success Response
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "dob": "1990-01-01",
+  "gender": "Male",
+  "phone": "555-0100",
+  "email": "john@example.com",
+  "address": "123 Main St",
+  "blood_group": "O+",
+  "medical_history": "None",
+  "emergency_contact": "555-0101",
+  "patient_user_id": 25
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse
+* DB fields are fully encrypted (AES-256-CBC) but decypted in JSON payload.
+
+---
+
+### Create Patient
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/patients
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "name": "John Doe",
+  "dob": "1990-01-01",
+  "gender": "Male",
+  "phone": "555-0100",
+  "email": "john@example.com",
+  "address": "123 Main St",
+  "blood_group": "O+",
+  "medical_history": "No known allergies",
+  "emergency_contact": "555-0101",
+  "patient_user_id": 25
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "Patient created successfully",
+  "patient_id": 1
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse
+* Validation Rules: `name`, `dob`, `gender`, `phone`, `email` are required. `patient_user_id` must belong to a user with `PATIENT` role in the same tenant and cannot be already mapped.
+
+---
+
+### Update Patient
+
+#### Method
+```http
+PUT
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/patients/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "phone": "555-9999",
+  "address": "456 New St"
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "Patient updated successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse
+
+---
+
+### Delete Patient
+
+#### Method
+```http
+DELETE
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/patients/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+*(Empty)*
+
+#### Success Response
+```json
+{
+  "message": "Patient deleted successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse
+* Validation Rules: Soft deletes via `is_deleted` flag.
+
+---
+
+## Appointment Management
+
+### List Appointments
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/appointments
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Success Response
+```json
+[
+  {
+    "id": 1,
+    "patient_id": 1,
+    "provider_id": 2,
+    "appointment_date": "2026-06-15",
+    "appointment_time": "10:00:00",
+    "status": "scheduled"
+  }
+]
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse, Patient
+
+---
+
+### Get Appointment
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/appointments/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Success Response
+```json
+{
+  "id": 1,
+  "patient_id": 1,
+  "provider_id": 2,
+  "appointment_date": "2026-06-15",
+  "appointment_time": "10:00:00",
+  "status": "scheduled",
+  "notes": "Follow-up checkup."
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse, Patient
+
+---
+
+### Create Appointment
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/appointments
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "patient_id": 1,
+  "provider_id": 2,
+  "appointment_date": "2026-06-15",
+  "appointment_time": "10:00:00"
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "Appointment created successfully",
+  "appointment_id": 1
+}
+```
+
+#### Error Response
+```json
+{
+  "error": "This provider already has an appointment at the requested date and time."
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse, Patient
+* Validation Rules: Cannot exceed 10 appointments per day per tenant. Strong double-booking prevention (`uk_provider_slot`).
+
+---
+
+### Update Appointment
+
+#### Method
+```http
+PUT
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/appointments/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "status": "completed",
+  "notes": "Patient fully recovered. No further action needed."
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "Appointment updated successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse, Patient
+* Notes are strictly stored securely via AES-256-CBC.
+
+---
+
+### Cancel Appointment
+
+#### Method
+```http
+DELETE
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/appointments/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+*(Empty)*
+
+#### Success Response
+```json
+{
+  "message": "Appointment deleted successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse, Patient
+* Marks as `is_cancelled = 1` and status = `cancelled`.
+
+---
+
+## Dashboard
+
+### Dashboard Metrics
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/dashboard
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Success Response
 ```json
 {
   "dashboard": {
@@ -487,223 +923,636 @@ Returns tenant-level dashboard metrics (patients, appointments, invoices).
 }
 ```
 
-### Patient management
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin, Provider
 
-- `GET /api/patients` - List all patients
-- `POST /api/patients` - Add a new patient
-  - **Request:** `{ "name": "John Doe", "dob": "1995-10-20", "gender": "Male", "phone": "9999999999", "email": "john@test.com", "address": "123 Main St, City", "blood_group": "O+", "medical_history": "No known allergies", "emergency_contact": "8888888888" }`
-- `GET /api/patients/{id}` - Get patient details
-- `PUT /api/patients/{id}` - Update patient information
-  - **Request:** `{ "name": "John Doe", "phone": "8888888888", "address": "456 New St" }`
-- `DELETE /api/patients/{id}` - Soft delete a patient
+---
 
-**Note:** PHI fields (name, dob, gender, phone, email, etc.) are encrypted in the database and automatically decrypted in responses.
+## Calendar API
 
-### Appointment management
+### Calendar Events
 
-- `GET /api/appointments` - List all appointments
-- `POST /api/appointments` - Create a new appointment
-  - **Request:** `{ "patient_id": 1, "provider_id": 2, "appointment_date": "2026-06-10", "appointment_time": "10:00:00" }`
-- `GET /api/appointments/{id}` - Get appointment details
-- `PUT /api/appointments/{id}` - Update appointment
-  - **Request:** `{ "status": "completed", "notes": "updated notes..." }`
-- `DELETE /api/appointments/{id}` - Cancel an appointment
+#### Method
+```http
+GET
+```
 
-**Note:** `notes` field is encrypted in the database.
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/calendar?start_date=2026-06-01&end_date=2026-06-30
+```
 
-### Calendar management
-
-- `GET /api/calendar` - Get appointments for a calendar view
-  - **Query Params:** `?date=YYYY-MM-DD` OR `?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
-- `GET /api/calendar/appointments/{id}/tooltip` - Get specific details for rendering an appointment tooltip
-
-### Billing management
-
-- `GET /api/invoices` - List all invoices
-- `POST /api/invoices` - Generate a new invoice
-  - **Request:** `{ "patient_id": 1, "amount": 150.00, "description": "Consultation" }`
-- `PUT /api/invoices/{id}` - Update invoice status
-  - **Request:** `{ "status": "paid" }`
-
-### Staff management
-
-- `GET /api/staff` - List all staff members
-- `POST /api/staff` - Create new staff member
-  - **Request:** `{ "name": "Dr. Smith", "email": "doctor@test.com", "password": "securepass", "role_id": 2 }`
-  - **Requires:** Admin role
-- `PUT /api/staff/{id}` - Update staff information
-  - **Request:** `{ "name": "Dr. Smith", "email": "doctor@test.com" }`
-- `DELETE /api/staff/{id}` - Deactivate staff member
-
-### User management
-
-- `GET /api/users` - List users (supports pagination & filtering)
-  - **Query Params:** `?page=1&limit=10&name=John&email=john@test.com`
-  - **Requires:** Admin role
-- `GET /api/users/{id}` - Get a specific user details
-  - **Requires:** Admin role
-- `POST /api/users` - Create a new user
-  - **Request:** `{ "name": "Jane Doe", "email": "jane@test.com", "password": "securepass", "role": 3 }`
-  - **Requires:** Admin role
-- `PUT /api/users/{id}` - Update a user's details
-  - **Request:** `{ "name": "Jane Doe", "email": "jane@test.com", "role": 3 }`
-  - **Requires:** Admin role
-- `DELETE /api/users/{id}` - Soft delete a user
-  - **Requires:** Admin role
-
-## Notes
-
-- **JWT Authentication**: Access tokens are short-lived and stored in PHP sessions after login.
-- **Refresh Tokens**: Stored securely in the database and can be used to obtain new access tokens.
-- **Tenant Isolation**: Enforced by tenant ID in JWT claims and all repository queries.
-- **PHI Encryption**: Protected Health Information (medical_data, appointment notes, etc.) is automatically encrypted at the database level using AES-256-CBC and decrypted when retrieved.
-- **Password Security**: All passwords are hashed using `password_hash()` (PHP's default bcrypt).
-- **Plain JSON APIs**: All endpoints accept and return plain JSON - encryption is handled transparently for PHI fields at the database layer.
-- **AES Configuration**: Uses `AES-256-CBC` cipher with the key configured in `.env` as `AES_KEY`.
-
-## Testing with Postman
-
-### 1. Register a new user
-
-**Method:** POST  
-**URL:** `http://localhost/PHP-MVP/backend/public/api/register`  
-**Headers:** 
-- `Content-Type: application/json`
-- `X-CSRF-TOKEN: <your_csrf_token>`
-**Body:**
+#### Headers
 ```json
 {
-  "name": "Admin User",
-  "email": "admin@test.com",
-  "password": "password123",
-  "tenant_id": 1,
-  "role_id": 1
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
 }
 ```
 
-### 2. Login
+#### Success Response
+```json
+[
+  {
+    "id": 1,
+    "title": "Apt with John Doe",
+    "start": "2026-06-15T10:00:00",
+    "provider_id": 2,
+    "status": "scheduled"
+  }
+]
+```
 
-**Method:** POST  
-**URL:** `http://localhost/PHP-MVP/backend/public/api/login`  
-**Headers:** 
-- `Content-Type: application/json`
-- `X-CSRF-TOKEN: <your_csrf_token>`
-**Body:**
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin, Doctor, Nurse, Receptionist
+* Accepts `?date=` or `?start_date=&end_date=`.
+
+---
+
+### Appointment Tooltip
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/calendar/appointments/1/tooltip
+```
+
+#### Headers
 ```json
 {
-  "email": "admin@test.com",
-  "password": "password123"
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
 }
 ```
 
-Save the returned `access_token` from the response for authenticated requests.
-
-### 3. Get Dashboard (Authenticated)
-
-**Method:** GET  
-**URL:** `http://localhost/PHP-MVP/backend/public/api/dashboard`  
-**Headers:** 
-- `Content-Type: application/json`
-- `Authorization: Bearer <your_access_token>`
-
-### 4. Add a Patient
-
-**Method:** POST  
-**URL:** `http://localhost/PHP-MVP/backend/public/api/patients`  
-**Headers:** 
-- `Content-Type: application/json`
-- `Authorization: Bearer <your_access_token>`  
-- `X-CSRF-TOKEN: <your_csrf_token>`
-**Body:**
+#### Success Response
 ```json
 {
-  "name": "John Doe",
-  "dob": "1995-10-20",
-  "gender": "Male",
-  "phone": "9999999999",
-  "email": "john@test.com",
-  "address": "123 Main St, City",
-  "blood_group": "O+",
-  "medical_history": "No known allergies",
-  "emergency_contact": "8888888888"
+  "id": 1,
+  "patient_name": "John Doe",
+  "provider_name": "Dr. Smith",
+  "appointment_date": "2026-06-15",
+  "appointment_time": "10:00:00",
+  "status": "scheduled",
+  "notes": "Follow-up checkup."
 }
 ```
 
-### 5. Create an Appointment
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin, Doctor, Nurse, Receptionist
 
-**Method:** POST  
-**URL:** `http://localhost/PHP-MVP/backend/public/api/appointments`  
-**Headers:** 
-- `Content-Type: application/json`
-- `Authorization: Bearer <your_access_token>`  
-- `X-CSRF-TOKEN: <your_csrf_token>`
-**Body:**
+---
+
+## Prescription & Pharmacy
+
+### List Prescriptions
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/prescriptions
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Success Response
+```json
+[
+  {
+    "id": 1,
+    "patient_id": 1,
+    "provider_id": 2,
+    "status": "PENDING",
+    "notes": "Take after meals"
+  }
+]
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Pharmacist, Patient
+
+---
+
+### Create Prescription
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/prescriptions
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
 ```json
 {
   "patient_id": 1,
   "provider_id": 2,
-  "appointment_date": "2026-06-10",
-  "appointment_time": "10:00:00"
+  "notes": "Take after meals",
+  "items": [
+    {
+      "medicine_name": "Amoxicillin",
+      "dosage": "500mg",
+      "quantity": 20
+    }
+  ]
 }
 ```
 
-### 6. Get Calendar Events
-
-**Method:** GET  
-**URL:** `http://localhost/PHP-MVP/backend/public/api/calendar?date=2026-06-10`  
-**Headers:** 
-- `Content-Type: application/json`
-- `Authorization: Bearer <your_access_token>`  
-
-## Development Workflow
-
-- Work in feature branches.
-- Create Pull Requests for review.
-- Do not commit directly to `main`.
-
-### Example git commands
-
-```bash
-git checkout main
-git pull origin main
-git checkout -b feature/auth
-# ... make changes ...
-git add .
-git commit -m "Add login API"
-git push origin feature/auth
-
+#### Success Response
+```json
+{
+  "message": "Prescription created successfully",
+  "prescription_id": 1
+}
 ```
-## STAFF MANAGEMENT API 
 
-1) Add Staff
-POST /api/staff
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider
+
+---
+
+### Verify Prescription (Pharmacist)
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/prescriptions/1/verify
+```
+
+#### Headers
+```json
 {
-  "name": "Dr. Alice Johnson",
-  "email": "alice.johnson@example.com",
-  "password": "SecurePass123",
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+*(Empty)*
+
+#### Success Response
+```json
+{
+  "message": "Prescription verified"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Pharmacist
+* Moves status from `PENDING` to `VERIFIED`.
+
+---
+
+### Dispense Prescription (Pharmacist)
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/prescriptions/1/dispense
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+*(Empty)*
+
+#### Success Response
+```json
+{
+  "message": "Prescription dispensed"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Pharmacist
+* Moves status from `VERIFIED` to `DISPENSED`.
+
+---
+
+## Billing & Payment
+
+### Generate Invoice
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/invoices
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "patient_id": 1,
+  "invoice_number": "INV-1002",
+  "amount": 150.00
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "Invoice created successfully",
+  "invoice_id": 1
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin, Provider
+* Validates `amount` > 0.
+
+---
+
+### List Invoices
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/invoices
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Success Response
+```json
+{
+  "invoices": [
+    {
+      "id": 1,
+      "patient_id": 1,
+      "invoice_number": "INV-1002",
+      "amount": "150.00",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin, Provider, Patient
+
+---
+
+### My Invoices (Patient Only)
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/invoices/my
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Success Response
+```json
+{
+  "invoices": [
+    {
+      "id": 1,
+      "invoice_number": "INV-1002",
+      "amount": "150.00",
+      "status": "pending"
+    }
+  ]
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Patient
+* Looks up the patient record based on the currently logged-in Patient mapping (`patient_user_id`).
+
+---
+
+### Update Invoice Status
+
+#### Method
+```http
+PUT
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/invoices/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "status": "paid"
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "Invoice updated successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin, Provider
+
+---
+
+### Pending Summary
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/invoices/pending-summary
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Success Response
+```json
+{
+  "summary": {
+    "count": 5,
+    "total_amount": "750.00"
+  }
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin, Provider
+
+---
+
+## Communication Module
+
+### Add Note
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/appointments/1/notes
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "note": "Patient complained of mild headaches."
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "Note added successfully",
+  "note_id": 1
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse
+* Note text is stored encrypted (AES-256-CBC).
+
+---
+
+### List Notes
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/appointments/1/notes
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Success Response
+```json
+{
+  "notes": [
+    {
+      "id": 1,
+      "note": "Patient complained of mild headaches.",
+      "created_at": "2026-06-15 10:15:00"
+    }
+  ]
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse
+* Notes are decrypted on retrieval.
+
+---
+
+## Staff Management
+
+### Add Staff
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/staff
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "name": "Dr. Sarah",
+  "email": "sarah@example.com",
+  "password": "Password123",
   "role_id": 6
 }
+```
 
-2) Get Staff List
-GET /api/staff
-
-3) Get Staff By ID
-GET /api/staff/{id}
-
-4) Update Staff
-PUT /api/staff/{id}
-
+#### Success Response
+```json
 {
-  "name": "Dr. Alice J. Johnson",
-  "email": "alice.johnson@clinic.com",
-  "role_id": 6
+  "message": "Staff member added successfully",
+  "user_id": 3
 }
+```
 
-5) Activate Staff
-PATCH /api/staff/{id}/activate
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin
+* Role ID must be a valid staff ID (e.g. 6 for Doctor, 3 for Nurse).
 
-6) Deactivate Staff
-PATCH /api/staff/{id}/deactivate
+---
 
-7) Soft Delete Staff
-DELETE /api/staff/{id}
+### Activate/Deactivate Staff
+
+#### Method
+```http
+PATCH
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/staff/3/deactivate
+```
+*(Also `/api/staff/3/activate`)*
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+*(Empty)*
+
+#### Success Response
+```json
+{
+  "message": "Staff member deactivated successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin
+* Toggles the `is_active` flag.
+
+---
+*Generated directly from active implementation.*

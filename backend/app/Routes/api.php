@@ -10,10 +10,9 @@ use App\Middleware\RoleMiddleware;
 /** @var \App\Core\Router $router */
 
 // Public routes
-$router->get('/api/csrf-token', 'AuthController@getCsrfToken');
-$router->post('/api/register', 'AuthController@register', [CsrfMiddleware::class]);
-$router->post('/api/login', 'AuthController@login', [CsrfMiddleware::class]);
-$router->post('/api/refresh', 'AuthController@refresh', [CsrfMiddleware::class]);
+$router->post('/api/register', 'AuthController@register');
+$router->post('/api/login', 'AuthController@login');
+$router->post('/api/refresh', 'AuthController@refresh');
 
 // Protected auth routes
 $router->post('/api/logout', 'AuthController@logout', [AuthMiddleware::class, CsrfMiddleware::class]);
@@ -47,8 +46,11 @@ $router->get('/api/calendar/appointments/{id}/tooltip', 'CalendarController@tool
 
 // Billing management
 $router->get('/api/invoices', 'BillingController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::PATIENT]]]);
-$router->post('/api/invoices', 'BillingController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::PATIENT]]]);
-$router->put('/api/invoices/{id}', 'BillingController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::PATIENT]]]);
+$router->get('/api/invoices/my', 'BillingController@myInvoices', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::PATIENT]]]);
+$router->get('/api/invoices/pending-summary', 'BillingController@pendingSummary', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
+$router->get('/api/invoices/paid-summary', 'BillingController@paidSummary', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
+$router->post('/api/invoices', 'BillingController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
+$router->put('/api/invoices/{id}', 'BillingController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
 
 // Staff management
 $router->get('/api/staff', 'DoctorController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);

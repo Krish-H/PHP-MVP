@@ -17,9 +17,7 @@ class AuthController {
         $this->authService = new AuthService();
     }
 
-    public function getCsrfToken() {
-        Response::json(['csrf_token' => Csrf::generateToken()]);
-    }
+
 
     public function register() {
         $data = Request::body();
@@ -71,10 +69,14 @@ class AuthController {
             $result = $this->authService->loginUser($data);
             $this->setRefreshTokenCookie($result['tokens']['refresh_token']);
 
+            $csrfToken = Csrf::regenerateToken();
+
             Response::json([
                 'message' => 'Login successful',
                 'user' => $result['user'],
-                'access_token' => $result['tokens']['access_token']
+                'access_token' => $result['tokens']['access_token'],
+                'refresh_token' => $result['tokens']['refresh_token'],
+                'csrf_token' => $csrfToken
             ], 200);
         } catch (Exception $e) {
             $code = $e->getCode();
@@ -93,8 +95,13 @@ class AuthController {
         try {
             $tokens = $this->authService->refreshAccessToken($refreshToken);
             $this->setRefreshTokenCookie($tokens['refresh_token']);
+            $csrfToken = Csrf::regenerateToken();
 
-            Response::json(['message' => 'Token refreshed', 'access_token' => $tokens['access_token']], 200);
+            Response::json([
+                'message' => 'Token refreshed',
+                'access_token' => $tokens['access_token'],
+                'csrf_token' => $csrfToken
+            ], 200);
         }catch (Exception $e) {
     // Ensure the status code is actually a valid HTTP integer, otherwise default to 500
     $code = $e->getCode();
@@ -110,7 +117,7 @@ class AuthController {
             if ($userId) {
                 $this->authService->logout($userId);
             }
-            unset($_SESSION['access_token'], $_SESSION['current_user_id'], $_SESSION['current_tenant_id'], $_SESSION['current_role_id']);
+            unset($_SESSION['access_token'], $_SESSION['current_user_id'], $_SESSION['current_tenant_id'], $_SESSION['current_role_id'], $_SESSION['csrf_token']);
             $this->clearRefreshTokenCookie();
             Response::json(['message' => 'Logged out successfully'], 200);
         }catch (Exception $e) {
