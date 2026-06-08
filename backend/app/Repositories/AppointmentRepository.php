@@ -133,10 +133,10 @@ class AppointmentRepository {
         $stmt = $this->db->prepare(
             'INSERT INTO appointments
              (tenant_id, patient_id, provider_id, appointment_date, appointment_time,
-              reason, status, is_cancelled, created_at, updated_at)
+              notes, status, is_cancelled, created_at, updated_at)
              VALUES
              (:tenant_id, :patient_id, :provider_id, :appointment_date, :appointment_time,
-              :reason, "scheduled", 0, NOW(), NOW())'
+              :notes, "scheduled", 0, NOW(), NOW())'
         );
 
         $stmt->execute([
@@ -145,7 +145,7 @@ class AppointmentRepository {
             'provider_id'      => (int) $data['provider_id'],
             'appointment_date' => $data['appointment_date'],
             'appointment_time' => $data['appointment_time'],
-            'reason'           => $data['reason'] ?? null,
+            'notes'            => $data['notes'] ?? null,
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -160,7 +160,7 @@ class AppointmentRepository {
      * @return bool  true if a row was updated
      */
     public function update(int $id, int $tenantId, array $data): bool {
-        $allowed    = ['appointment_date', 'appointment_time', 'reason', 'status'];
+        $allowed    = ['appointment_date', 'appointment_time', 'notes', 'status'];
         $setClauses = [];
         $params     = ['id' => $id, 'tenant_id' => $tenantId];
 
