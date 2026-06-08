@@ -244,7 +244,8 @@ Use the following numeric role IDs when creating or testing users:
 - Nurse: 3
 - Patient: 4
 - Pharmacist: 5
-- Receptionist: 6
+- Doctor: 6
+- Receptionist: 7
 
 ---
 
@@ -328,6 +329,37 @@ Must validate on the server:
 - Provider exists
 - Patient exists
 - No overlapping appointment for the same provider
+
+---
+
+# Calendar Module API Rules
+
+Allowed Roles:
+
+- Admin
+- Doctor
+- Nurse
+- Receptionist
+
+Authorization Required: YES
+
+Get Calendar Appointments (Single Day)
+
+```
+GET /api/calendar?date=2026-06-10
+```
+
+Get Calendar Appointments (Date Range)
+
+```
+GET /api/calendar?start_date=2026-06-01&end_date=2026-06-30
+```
+
+Get Appointment Tooltip Details
+
+```
+GET /api/calendar/appointments/{id}/tooltip
+```
 
 ---
 
@@ -479,6 +511,12 @@ Returns tenant-level dashboard metrics (patients, appointments, invoices).
 
 **Note:** `notes` field is encrypted in the database.
 
+### Calendar management
+
+- `GET /api/calendar` - Get appointments for a calendar view
+  - **Query Params:** `?date=YYYY-MM-DD` OR `?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
+- `GET /api/calendar/appointments/{id}/tooltip` - Get specific details for rendering an appointment tooltip
+
 ### Billing management
 
 - `GET /api/invoices` - List all invoices
@@ -608,6 +646,14 @@ Save the returned `access_token` from the response for authenticated requests.
   "appointment_time": "10:00:00"
 }
 ```
+
+### 6. Get Calendar Events
+
+**Method:** GET  
+**URL:** `http://localhost/PHP-MVP/backend/public/api/calendar?date=2026-06-10`  
+**Headers:** 
+- `Content-Type: application/json`
+- `Authorization: Bearer <your_access_token>`  
 
 ## Development Workflow
 
