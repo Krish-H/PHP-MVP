@@ -60,6 +60,7 @@ Body
 
 ```
 {
+  "name": "Admin User",
   "email": "admin@test.com",
   "password": "password123",
   "role_id": 1,
@@ -109,6 +110,7 @@ Response
   "message": "Login successful",
   "user": {
     "id": 1,
+    "name": "Admin User",
     "email": "admin@test.com",
     "role_id": 1,
     "tenant_id": 1
@@ -275,7 +277,11 @@ Body
   "dob": "1995-10-20",
   "gender": "Male",
   "phone": "9999999999",
-  "email": "john@test.com"
+  "email": "john@test.com",
+  "address": "123 Main St, City",
+  "blood_group": "O+",
+  "medical_history": "No known allergies",
+  "emergency_contact": "8888888888"
 }
 ```
 
@@ -386,10 +392,31 @@ Returns the current user profile. Requires authentication via JWT token in sessi
   "message": "Profile retrieved",
   "user": {
     "id": 1,
+    "name": "Admin User",
     "email": "admin@test.com",
     "role_id": 1,
     "tenant_id": 1
   }
+}
+```
+
+#### POST /api/change-password
+Allows an authenticated user to change their password. Requires authentication via JWT token.
+
+**Request:**
+```json
+{
+  "current_password": "old_password123",
+  "new_password": "new_secure_password",
+  "confirm_password": "new_secure_password"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Password changed successfully"
 }
 ```
 
@@ -432,19 +459,19 @@ Returns tenant-level dashboard metrics (patients, appointments, invoices).
 
 - `GET /api/patients` - List all patients
 - `POST /api/patients` - Add a new patient
-  - **Request:** `{ "name": "John Doe", "medical_data": "patient history...", "contact": "555-1234" }`
+  - **Request:** `{ "name": "John Doe", "dob": "1995-10-20", "gender": "Male", "phone": "9999999999", "email": "john@test.com", "address": "123 Main St, City", "blood_group": "O+", "medical_history": "No known allergies", "emergency_contact": "8888888888" }`
 - `GET /api/patients/{id}` - Get patient details
 - `PUT /api/patients/{id}` - Update patient information
-  - **Request:** `{ "name": "John Doe", "medical_data": "updated history...", "contact": "555-1234" }`
+  - **Request:** `{ "name": "John Doe", "phone": "8888888888", "address": "456 New St" }`
 - `DELETE /api/patients/{id}` - Soft delete a patient
 
-**Note:** `medical_data` is encrypted in the database and automatically decrypted in responses.
+**Note:** PHI fields (name, dob, gender, phone, email, etc.) are encrypted in the database and automatically decrypted in responses.
 
 ### Appointment management
 
 - `GET /api/appointments` - List all appointments
 - `POST /api/appointments` - Create a new appointment
-  - **Request:** `{ "patient_id": 1, "provider_id": 2, "starts_at": "2024-01-15 10:00:00", "ends_at": "2024-01-15 11:00:00", "status": "scheduled", "notes": "patient notes..." }`
+  - **Request:** `{ "patient_id": 1, "provider_id": 2, "appointment_date": "2026-06-10", "appointment_time": "10:00:00" }`
 - `GET /api/appointments/{id}` - Get appointment details
 - `PUT /api/appointments/{id}` - Update appointment
   - **Request:** `{ "status": "completed", "notes": "updated notes..." }`
@@ -464,11 +491,27 @@ Returns tenant-level dashboard metrics (patients, appointments, invoices).
 
 - `GET /api/staff` - List all staff members
 - `POST /api/staff` - Create new staff member
-  - **Request:** `{ "email": "doctor@test.com", "password": "securepass", "role_id": 2 }`
+  - **Request:** `{ "name": "Dr. Smith", "email": "doctor@test.com", "password": "securepass", "role_id": 2 }`
   - **Requires:** Admin role
 - `PUT /api/staff/{id}` - Update staff information
-  - **Request:** `{ "email": "doctor@test.com" }`
+  - **Request:** `{ "name": "Dr. Smith", "email": "doctor@test.com" }`
 - `DELETE /api/staff/{id}` - Deactivate staff member
+
+### User management
+
+- `GET /api/users` - List users (supports pagination & filtering)
+  - **Query Params:** `?page=1&limit=10&name=John&email=john@test.com`
+  - **Requires:** Admin role
+- `GET /api/users/{id}` - Get a specific user details
+  - **Requires:** Admin role
+- `POST /api/users` - Create a new user
+  - **Request:** `{ "name": "Jane Doe", "email": "jane@test.com", "password": "securepass", "role": 3 }`
+  - **Requires:** Admin role
+- `PUT /api/users/{id}` - Update a user's details
+  - **Request:** `{ "name": "Jane Doe", "email": "jane@test.com", "role": 3 }`
+  - **Requires:** Admin role
+- `DELETE /api/users/{id}` - Soft delete a user
+  - **Requires:** Admin role
 
 ## Notes
 
@@ -485,11 +528,14 @@ Returns tenant-level dashboard metrics (patients, appointments, invoices).
 ### 1. Register a new user
 
 **Method:** POST  
-**URL:** `http://localhost/PHP-MVP/backend/public/index.php/api/register`  
-**Headers:** `Content-Type: application/json`  
+**URL:** `http://localhost/PHP-MVP/backend/public/api/register`  
+**Headers:** 
+- `Content-Type: application/json`
+- `X-CSRF-TOKEN: <your_csrf_token>`
 **Body:**
 ```json
 {
+  "name": "Admin User",
   "email": "admin@test.com",
   "password": "password123",
   "tenant_id": 1,
@@ -500,8 +546,10 @@ Returns tenant-level dashboard metrics (patients, appointments, invoices).
 ### 2. Login
 
 **Method:** POST  
-**URL:** `http://localhost/PHP-MVP/backend/public/index.php/api/login`  
-**Headers:** `Content-Type: application/json`  
+**URL:** `http://localhost/PHP-MVP/backend/public/api/login`  
+**Headers:** 
+- `Content-Type: application/json`
+- `X-CSRF-TOKEN: <your_csrf_token>`
 **Body:**
 ```json
 {
@@ -515,7 +563,7 @@ Save the returned `access_token` from the response for authenticated requests.
 ### 3. Get Dashboard (Authenticated)
 
 **Method:** GET  
-**URL:** `http://localhost/PHP-MVP/backend/public/index.php/api/dashboard`  
+**URL:** `http://localhost/PHP-MVP/backend/public/api/dashboard`  
 **Headers:** 
 - `Content-Type: application/json`
 - `Authorization: Bearer <your_access_token>`
@@ -523,35 +571,41 @@ Save the returned `access_token` from the response for authenticated requests.
 ### 4. Add a Patient
 
 **Method:** POST  
-**URL:** `http://localhost/PHP-MVP/backend/public/index.php/api/patients`  
+**URL:** `http://localhost/PHP-MVP/backend/public/api/patients`  
 **Headers:** 
 - `Content-Type: application/json`
 - `Authorization: Bearer <your_access_token>`  
+- `X-CSRF-TOKEN: <your_csrf_token>`
 **Body:**
 ```json
 {
   "name": "John Doe",
-  "medical_data": "Allergic to penicillin, diabetic",
-  "contact": "555-1234"
+  "dob": "1995-10-20",
+  "gender": "Male",
+  "phone": "9999999999",
+  "email": "john@test.com",
+  "address": "123 Main St, City",
+  "blood_group": "O+",
+  "medical_history": "No known allergies",
+  "emergency_contact": "8888888888"
 }
 ```
 
 ### 5. Create an Appointment
 
 **Method:** POST  
-**URL:** `http://localhost/PHP-MVP/backend/public/index.php/api/appointments`  
+**URL:** `http://localhost/PHP-MVP/backend/public/api/appointments`  
 **Headers:** 
 - `Content-Type: application/json`
 - `Authorization: Bearer <your_access_token>`  
+- `X-CSRF-TOKEN: <your_csrf_token>`
 **Body:**
 ```json
 {
   "patient_id": 1,
-  "provider_id": 1,
-  "starts_at": "2024-01-20 10:00:00",
-  "ends_at": "2024-01-20 11:00:00",
-  "status": "scheduled",
-  "notes": "Follow-up consultation"
+  "provider_id": 2,
+  "appointment_date": "2026-06-10",
+  "appointment_time": "10:00:00"
 }
 ```
 

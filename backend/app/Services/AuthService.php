@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Config\Roles;
 use App\Repositories\UserRepository;
 use App\Repositories\TokenRepository;
 use App\Security\JWT;
+use App\Security\Hash;
 use Exception;
 
 class AuthService {
@@ -19,15 +21,16 @@ class AuthService {
     public function registerUser($data) {
         $email = $data['email'] ?? null;
         $password = $data['password'] ?? null;
-        $roleId = $data['role_id'] ?? 1;
-        $tenantId = $data['tenant_id'] ?? 1;
+        $roleId = Roles::PATIENT;
+        $tenantId = 1;
+        $name = $data['name'] ?? null;
 
         if ($this->userRepo->findByEmail($email)) {
             throw new Exception('User already exists', 409);
         }
 
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $userId = $this->userRepo->create($email, $hashedPassword, $roleId, $tenantId);
+        $userId = $this->userRepo->create($email, $hashedPassword, $roleId, $tenantId, 1, $name);
 
         return [
             'user_id' => $userId
@@ -113,5 +116,33 @@ class AuthService {
         }
         unset($user['password_hash']);
         return $user;
+    }
+
+    public function changePassword($userId, $currentPassword, $newPassword, $confirmPassword) {
+        $user = $this->userRepo->findById($userId);
+        if (!$user) {
+            throw new Exception('User not found', 404);
+        }
+
+        if (!Hash::verify($currentPassword, $user['password_hash'])) {
+            throw new Exception('Current password is incorrect', 400);
+        }
+
+        if ($newPassword === $currentPassword) {
+            throw new Exception('New password must be different from current password', 400);
+        }
+
+        if (strlen($newPassword) < 8) {
+            throw new Exception('Password must be at least 8 characters long', 400);
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            throw new Exception('Passwords do not match', 400);
+        }
+
+        $hashedPassword = Hash::make($newPassword);
+        $this->userRepo->updatePassword($userId, $hashedPassword);
+        
+        $this->tokenRepo->deleteUserTokens($userId);
     }
 }

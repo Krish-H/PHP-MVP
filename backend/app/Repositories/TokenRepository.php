@@ -48,6 +48,11 @@ class TokenRepository {
         $stmt->execute(['id' => $id]);
     }
 
+    public function deleteUserTokens($userId) {
+        $stmt = $this->db->prepare('DELETE FROM refresh_tokens WHERE user_id = :user_id');
+        return $stmt->execute(['user_id' => $userId]);
+    }
+
     private function hashToken($token) {
         return hash('sha256', $token);
     }
