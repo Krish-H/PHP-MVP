@@ -155,4 +155,46 @@ class AuthController {
     Response::json(['error' => $e->getMessage()], $statusCode);
 }
     }
+
+    public function changePassword() {
+        $userId = $_SESSION['current_user_id'] ?? null;
+        if (!$userId) {
+            Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $data = Request::body();
+
+        if (!is_array($data)) {
+            Response::json(['error' => 'Invalid request body'], 400);
+        }
+
+        if (!Validator::required($data, ['current_password', 'new_password', 'confirm_password'])) {
+            Response::json(['error' => 'Current password, new password, and confirm password are required'], 400);
+        }
+
+        if (!Validator::minLength($data['new_password'], 8)) {
+            Response::json(['error' => 'Password must be at least 8 characters long'], 400);
+        }
+
+        try {
+            $this->authService->changePassword(
+                $userId,
+                $data['current_password'],
+                $data['new_password'],
+                $data['confirm_password']
+            );
+
+            Response::json([
+                'success' => true,
+                'message' => 'Password changed successfully'
+            ], 200);
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $statusCode = (is_numeric($code) && $code >= 100 && $code < 600) ? (int)$code : 400;
+            Response::json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], $statusCode);
+        }
+    }
 }
