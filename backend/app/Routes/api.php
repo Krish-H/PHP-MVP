@@ -46,8 +46,11 @@ $router->put('/api/invoices/{id}', 'BillingController@update', [AuthMiddleware::
 
 // Staff management
 $router->get('/api/staff', 'DoctorController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->get('/api/staff/{id}', 'DoctorController@show', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->post('/api/staff', 'DoctorController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->put('/api/staff/{id}', 'DoctorController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->patch('/api/staff/{id}/activate', 'DoctorController@activate', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->patch('/api/staff/{id}/deactivate', 'DoctorController@deactivate', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->delete('/api/staff/{id}', 'DoctorController@destroy', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 
 // User management

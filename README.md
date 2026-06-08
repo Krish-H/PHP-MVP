@@ -671,4 +671,39 @@ git checkout -b feature/auth
 git add .
 git commit -m "Add login API"
 git push origin feature/auth
+
 ```
+## STAFF MANAGEMENT API 
+
+1) Add Staff
+POST /api/staff
+{
+  "name": "Dr. Alice Johnson",
+  "email": "alice.johnson@example.com",
+  "password": "SecurePass123",
+  "role_id": 6
+}
+
+2) Get Staff List
+GET /api/staff
+
+3) Get Staff By ID
+GET /api/staff/{id}
+
+4) Update Staff
+PUT /api/staff/{id}
+
+{
+  "name": "Dr. Alice J. Johnson",
+  "email": "alice.johnson@clinic.com",
+  "role_id": 6
+}
+
+5) Activate Staff
+PATCH /api/staff/{id}/activate
+
+6) Deactivate Staff
+PATCH /api/staff/{id}/deactivate
+
+7) Soft Delete Staff
+DELETE /api/staff/{id}
