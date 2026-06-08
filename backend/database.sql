@@ -59,7 +59,7 @@ WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'Receptionist');
 -- TABLE: users
 -- ============================================================
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tenant_id INT NOT NULL,
     role_id INT NOT NULL,
@@ -199,4 +199,37 @@ CONSTRAINT fk_appt_provider
     ON DELETE RESTRICT
 
 
+);
+
+-- ============================================================
+-- TABLE: invoices
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS invoices (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id INT NOT NULL,
+    patient_id INT NOT NULL,
+    invoice_number VARCHAR(50) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    status ENUM('pending', 'paid') NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_invoice_tenant (tenant_id),
+    INDEX idx_invoice_patient (patient_id),
+    UNIQUE KEY uk_invoice_number (tenant_id, invoice_number),
+    CONSTRAINT fk_invoice_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+    CONSTRAINT fk_invoice_patient FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE RESTRICT
+);
+
+-- ============================================================
+-- TABLE: payments
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    invoice_id INT NOT NULL,
+    payment_amount DECIMAL(10, 2) NOT NULL,
+    payment_status VARCHAR(50) NOT NULL DEFAULT 'completed',
+    paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_payment_invoice FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
 );

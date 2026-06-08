@@ -37,8 +37,10 @@ $router->delete('/api/appointments/{id}', 'AppointmentController@destroy', [Auth
 
 // Billing management
 $router->get('/api/invoices', 'BillingController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::PATIENT]]]);
-$router->post('/api/invoices', 'BillingController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::PATIENT]]]);
-$router->put('/api/invoices/{id}', 'BillingController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::PATIENT]]]);
+$router->get('/api/invoices/pending-summary', 'BillingController@pendingSummary', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
+$router->get('/api/invoices/paid-summary', 'BillingController@paidSummary', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
+$router->post('/api/invoices', 'BillingController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
+$router->put('/api/invoices/{id}', 'BillingController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
 
 // Staff management
 $router->get('/api/staff', 'DoctorController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);

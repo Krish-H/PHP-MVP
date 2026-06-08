@@ -63,6 +63,24 @@ class PatientRepository {
         return $this->decryptPhi($patient);
     }
 
+    public function findByUserId(int $userId, int $tenantId): ?array {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM patients
+             WHERE user_id    = :user_id
+               AND tenant_id  = :tenant_id
+               AND is_deleted = 0
+             LIMIT 1'
+        );
+        $stmt->execute(['user_id' => $userId, 'tenant_id' => $tenantId]);
+        $patient = $stmt->fetch();
+
+        if (!$patient) {
+            return null;
+        }
+
+        return $this->decryptPhi($patient);
+    }
+
     // ----------------------------------------------------------------
     // WRITE
     // ----------------------------------------------------------------

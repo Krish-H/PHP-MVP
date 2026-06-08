@@ -15,8 +15,30 @@ class BillingController {
     }
 
     public function index() {
-        $invoices = $this->billingService->listInvoices($_SESSION['current_tenant_id']);
+        $invoices = $this->billingService->listInvoices(
+            $_SESSION['current_tenant_id'],
+            $_SESSION['current_role_id'],
+            $_SESSION['current_user_id']
+        );
         Response::json(['invoices' => $invoices], 200);
+    }
+
+    public function pendingSummary() {
+        try {
+            $summary = $this->billingService->getPendingSummary($_SESSION['current_tenant_id']);
+            Response::json($summary, 200);
+        } catch (Exception $e) {
+            Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
+        }
+    }
+
+    public function paidSummary() {
+        try {
+            $summary = $this->billingService->getPaidSummary($_SESSION['current_tenant_id']);
+            Response::json($summary, 200);
+        } catch (Exception $e) {
+            Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
+        }
     }
 
     public function store() {

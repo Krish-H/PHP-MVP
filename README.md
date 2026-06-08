@@ -244,7 +244,8 @@ Use the following numeric role IDs when creating or testing users:
 - Nurse: 3
 - Patient: 4
 - Pharmacist: 5
-- Receptionist: 6
+- Doctor: 6
+- Receptionist: 7
 
 ---
 
@@ -341,7 +342,7 @@ GET /api/staff
 
 Allowed: Admin
 
-Forbidden: Provider, Nurse, Patient, Pharmacist, Receptionist
+Forbidden: Provider, Nurse, Patient, Pharmacist, Doctor, Receptionist
 
 Expected response when unauthorized by role:
 
@@ -432,6 +433,7 @@ Invalidates refresh tokens and logs out the user.
 
 #### GET /api/dashboard
 Returns tenant-level dashboard metrics (patients, appointments, invoices).
+**Requires:** Admin or Provider role.
 
 **Response:**
 ```json
@@ -480,10 +482,13 @@ Returns tenant-level dashboard metrics (patients, appointments, invoices).
 **Note:** `notes` field is encrypted in the database.
 
 ### Billing management
+**Allowed Roles:** Admin, Provider, Patient
 
 - `GET /api/invoices` - List all invoices
+- `GET /api/invoices/pending-summary` - Get count and total amount of pending invoices
+- `GET /api/invoices/paid-summary` - Get count and total amount of paid invoices
 - `POST /api/invoices` - Generate a new invoice
-  - **Request:** `{ "patient_id": 1, "amount": 150.00, "description": "Consultation" }`
+  - **Request:** `{ "patient_id": 1, "invoice_number": "INV-1001", "amount": 150.00 }`
 - `PUT /api/invoices/{id}` - Update invoice status
   - **Request:** `{ "status": "paid" }`
 
@@ -491,10 +496,10 @@ Returns tenant-level dashboard metrics (patients, appointments, invoices).
 
 - `GET /api/staff` - List all staff members
 - `POST /api/staff` - Create new staff member
-  - **Request:** `{ "name": "Dr. Smith", "email": "doctor@test.com", "password": "securepass", "role_id": 2 }`
+  - **Request:** `{ "email": "doctor@test.com", "password": "securepass", "role_id": 2 }`
   - **Requires:** Admin role
 - `PUT /api/staff/{id}` - Update staff information
-  - **Request:** `{ "name": "Dr. Smith", "email": "doctor@test.com" }`
+  - **Request:** `{ "name": "Dr. Smith", "email": "doctor@test.com", "role_id": 2, "is_active": 1 }`
 - `DELETE /api/staff/{id}` - Deactivate staff member
 
 ### User management
