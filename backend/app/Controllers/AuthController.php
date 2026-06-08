@@ -155,8 +155,6 @@ class AuthController {
     Response::json(['error' => $e->getMessage()], $statusCode);
 }
     }
-<<<<<<< HEAD
-=======
 
     public function changePassword() {
         $userId = $_SESSION['current_user_id'] ?? null;
@@ -199,5 +197,4 @@ class AuthController {
             ], $statusCode);
         }
     }
->>>>>>> 249f18581c654c8dbd762809390b1eedea1e2f64
 }
