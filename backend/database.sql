@@ -200,3 +200,38 @@ CONSTRAINT fk_appt_provider
 
 
 );
+
+-- ============================================================
+-- appointment_notes table (Communication Module)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS appointment_notes (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id      INT         NOT NULL,
+    appointment_id INT         NOT NULL,
+    user_id        INT         NOT NULL,  -- who wrote the note
+    note           TEXT        NOT NULL,  -- AES-256-CBC encrypted
+    is_deleted     TINYINT(1)  NOT NULL DEFAULT 0,
+    deleted_at     TIMESTAMP   NULL      DEFAULT NULL,
+    created_at     TIMESTAMP   NOT NULL  DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP   NOT NULL  DEFAULT CURRENT_TIMESTAMP
+                               ON UPDATE CURRENT_TIMESTAMP,
+
+    INDEX idx_notes_tenant      (tenant_id),
+    INDEX idx_notes_appointment (appointment_id),
+    INDEX idx_notes_user        (user_id),
+
+    CONSTRAINT fk_notes_tenant
+        FOREIGN KEY (tenant_id)
+        REFERENCES tenants(id),
+
+    CONSTRAINT fk_notes_appointment
+        FOREIGN KEY (appointment_id)
+        REFERENCES appointments(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_notes_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE RESTRICT
+);

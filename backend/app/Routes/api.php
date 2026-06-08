@@ -18,7 +18,6 @@ $router->post('/api/refresh', 'AuthController@refresh', [CsrfMiddleware::class])
 // Protected auth routes
 $router->post('/api/logout', 'AuthController@logout', [AuthMiddleware::class, CsrfMiddleware::class]);
 $router->get('/api/profile', 'AuthController@profile', [AuthMiddleware::class]);
-$router->post('/api/change-password', 'AuthController@changePassword', [AuthMiddleware::class]);
 $router->get('/api/dashboard', 'DashboardController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
 
 // Patient management
@@ -34,6 +33,12 @@ $router->post('/api/appointments', 'AppointmentController@store', [AuthMiddlewar
 $router->get('/api/appointments/{id}', 'AppointmentController@show', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
 $router->put('/api/appointments/{id}', 'AppointmentController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
 $router->delete('/api/appointments/{id}', 'AppointmentController@destroy', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
+
+// Communication — Appointment Notes
+$router->get('/api/appointments/{id}/notes', 'NoteController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
+$router->post('/api/appointments/{id}/notes', 'NoteController@store', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
+$router->put('/api/notes/{id}', 'NoteController@update', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
+$router->delete('/api/notes/{id}', 'NoteController@destroy', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
 
 // Calendar API
 $router->get('/api/calendar', 'CalendarController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::RECEPTIONIST, Roles::NURSE, Roles::DOCTOR]]]);
