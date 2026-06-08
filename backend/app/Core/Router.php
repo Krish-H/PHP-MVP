@@ -28,6 +28,10 @@ class Router {
         $this->add('PUT', $uri, $action, $middlewares);
     }
 
+    public function patch($uri, $action, $middlewares = []) {
+        $this->add('PATCH', $uri, $action, $middlewares);
+    }
+
     public function delete($uri, $action, $middlewares = []) {
         $this->add('DELETE', $uri, $action, $middlewares);
     }

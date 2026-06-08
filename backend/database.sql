@@ -202,6 +202,7 @@ CONSTRAINT fk_appt_provider
 );
 
 -- ============================================================
+<<<<<<< HEAD
 -- TABLE: invoices
 -- ============================================================
 
@@ -232,4 +233,38 @@ CREATE TABLE IF NOT EXISTS payments (
     payment_status VARCHAR(50) NOT NULL DEFAULT 'completed',
     paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_payment_invoice FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
+=======
+-- appointment_notes table (Communication Module)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS appointment_notes (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id      INT         NOT NULL,
+    appointment_id INT         NOT NULL,
+    user_id        INT         NOT NULL,  -- who wrote the note
+    note           TEXT        NOT NULL,  -- AES-256-CBC encrypted
+    is_deleted     TINYINT(1)  NOT NULL DEFAULT 0,
+    deleted_at     TIMESTAMP   NULL      DEFAULT NULL,
+    created_at     TIMESTAMP   NOT NULL  DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP   NOT NULL  DEFAULT CURRENT_TIMESTAMP
+                               ON UPDATE CURRENT_TIMESTAMP,
+
+    INDEX idx_notes_tenant      (tenant_id),
+    INDEX idx_notes_appointment (appointment_id),
+    INDEX idx_notes_user        (user_id),
+
+    CONSTRAINT fk_notes_tenant
+        FOREIGN KEY (tenant_id)
+        REFERENCES tenants(id),
+
+    CONSTRAINT fk_notes_appointment
+        FOREIGN KEY (appointment_id)
+        REFERENCES appointments(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_notes_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE RESTRICT
+>>>>>>> 1d06e1bd3891379bccbf2a3271016aed8bc5cd96
 );

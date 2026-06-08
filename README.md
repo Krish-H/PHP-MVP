@@ -332,6 +332,37 @@ Must validate on the server:
 
 ---
 
+# Calendar Module API Rules
+
+Allowed Roles:
+
+- Admin
+- Doctor
+- Nurse
+- Receptionist
+
+Authorization Required: YES
+
+Get Calendar Appointments (Single Day)
+
+```
+GET /api/calendar?date=2026-06-10
+```
+
+Get Calendar Appointments (Date Range)
+
+```
+GET /api/calendar?start_date=2026-06-01&end_date=2026-06-30
+```
+
+Get Appointment Tooltip Details
+
+```
+GET /api/calendar/appointments/{id}/tooltip
+```
+
+---
+
 # RBAC Testing
 
 Admin Route
@@ -481,6 +512,12 @@ Returns tenant-level dashboard metrics (patients, appointments, invoices).
 
 **Note:** `notes` field is encrypted in the database.
 
+### Calendar management
+
+- `GET /api/calendar` - Get appointments for a calendar view
+  - **Query Params:** `?date=YYYY-MM-DD` OR `?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
+- `GET /api/calendar/appointments/{id}/tooltip` - Get specific details for rendering an appointment tooltip
+
 ### Billing management
 **Allowed Roles:** Admin, Provider, Patient
 
@@ -614,6 +651,14 @@ Save the returned `access_token` from the response for authenticated requests.
 }
 ```
 
+### 6. Get Calendar Events
+
+**Method:** GET  
+**URL:** `http://localhost/PHP-MVP/backend/public/api/calendar?date=2026-06-10`  
+**Headers:** 
+- `Content-Type: application/json`
+- `Authorization: Bearer <your_access_token>`  
+
 ## Development Workflow
 
 - Work in feature branches.
@@ -630,4 +675,39 @@ git checkout -b feature/auth
 git add .
 git commit -m "Add login API"
 git push origin feature/auth
+
 ```
+## STAFF MANAGEMENT API 
+
+1) Add Staff
+POST /api/staff
+{
+  "name": "Dr. Alice Johnson",
+  "email": "alice.johnson@example.com",
+  "password": "SecurePass123",
+  "role_id": 6
+}
+
+2) Get Staff List
+GET /api/staff
+
+3) Get Staff By ID
+GET /api/staff/{id}
+
+4) Update Staff
+PUT /api/staff/{id}
+
+{
+  "name": "Dr. Alice J. Johnson",
+  "email": "alice.johnson@clinic.com",
+  "role_id": 6
+}
+
+5) Activate Staff
+PATCH /api/staff/{id}/activate
+
+6) Deactivate Staff
+PATCH /api/staff/{id}/deactivate
+
+7) Soft Delete Staff
+DELETE /api/staff/{id}
