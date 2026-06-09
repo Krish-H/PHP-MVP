@@ -9,6 +9,5 @@ class Roles
     public const NURSE = 3;
     public const PATIENT = 4;
     public const PHARMACIST = 5;
-    public const DOCTOR = 6;
-    public const RECEPTIONIST = 7;
+    public const RECEPTIONIST = 6;
 }

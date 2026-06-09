@@ -95,12 +95,12 @@ class AuthController {
         try {
             $tokens = $this->authService->refreshAccessToken($refreshToken);
             $this->setRefreshTokenCookie($tokens['refresh_token']);
-            $csrfToken = Csrf::regenerateToken();
+           
 
             Response::json([
                 'message' => 'Token refreshed',
                 'access_token' => $tokens['access_token'],
-                'csrf_token' => $csrfToken
+                
             ], 200);
         }catch (Exception $e) {
     // Ensure the status code is actually a valid HTTP integer, otherwise default to 500

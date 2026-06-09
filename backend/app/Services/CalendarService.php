@@ -87,7 +87,7 @@ class CalendarService {
         }
 
         // DOCTOR can only see their own tooltip
-        if ($roleId === Roles::DOCTOR && (int) $row['provider_id'] !== $userId) {
+        if ($roleId === Roles::PROVIDER && (int) $row['provider_id'] !== $userId) {
             throw new Exception('Access denied', 403);
         }
 
@@ -119,7 +119,7 @@ class CalendarService {
      * DOCTOR sees only their own; all other allowed roles see everything.
      */
     private function resolveProviderScope(int $roleId, int $userId): ?int {
-        return ($roleId === Roles::DOCTOR) ? $userId : null;
+        return ($roleId === Roles::PROVIDER) ? $userId : null;
     }
 
     private function validateDateFormat(string $date): void {

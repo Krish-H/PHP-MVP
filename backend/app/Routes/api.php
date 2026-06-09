@@ -41,8 +41,8 @@ $router->put('/api/notes/{id}', 'NoteController@update', [AuthMiddleware::class,
 $router->delete('/api/notes/{id}', 'NoteController@destroy', [AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
 
 // Calendar API
-$router->get('/api/calendar', 'CalendarController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::RECEPTIONIST, Roles::NURSE, Roles::DOCTOR]]]);
-$router->get('/api/calendar/appointments/{id}/tooltip', 'CalendarController@tooltip', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::RECEPTIONIST, Roles::NURSE, Roles::DOCTOR]]]);
+$router->get('/api/calendar', 'CalendarController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::RECEPTIONIST, Roles::NURSE, Roles::PROVIDER]]]);
+$router->get('/api/calendar/appointments/{id}/tooltip', 'CalendarController@tooltip', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::RECEPTIONIST, Roles::NURSE, Roles::PROVIDER]]]);
 
 // Billing management
 $router->get('/api/invoices', 'BillingController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::PATIENT]]]);
