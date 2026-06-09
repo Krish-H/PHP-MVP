@@ -109,7 +109,6 @@ class UserService {
             Roles::NURSE,
             Roles::PATIENT,
             Roles::PHARMACIST,
-            Roles::DOCTOR,
             Roles::RECEPTIONIST
         ];
         return in_array($role, $validRoles, true);

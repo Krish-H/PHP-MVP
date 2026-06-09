@@ -17,7 +17,7 @@ $router->post('/api/refresh', 'AuthController@refresh');
 // Protected auth routes
 $router->post('/api/logout', 'AuthController@logout', [AuthMiddleware::class, CsrfMiddleware::class]);
 $router->get('/api/profile', 'AuthController@profile', [AuthMiddleware::class]);
-$router->post('/api/change-password', 'AuthController@changePassword', [AuthMiddleware::class]);
+$router->post('/api/change-password', 'AuthController@changePassword', [AuthMiddleware::class, CsrfMiddleware::class]);
 $router->get('/api/dashboard', 'DashboardController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
 
 // Patient management
