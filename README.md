@@ -147,8 +147,7 @@ http://localhost/PHP-MVP/backend/public/api/refresh
 ```json
 {
   "message": "Token refreshed",
-  "access_token": "eyJhbGciOiJIUzI1Ni...",
-  "csrf_token": "a1b2c3d4e5f6..."
+  "access_token": "eyJhbGciOiJIUzI1Ni..."
 }
 ```
 
@@ -226,6 +225,49 @@ http://localhost/PHP-MVP/backend/public/api/profile
     "role_id": 1,
     "tenant_id": 1
   }
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: All users
+
+---
+
+### Change Password
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/change-password
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Request Body
+```json
+{
+  "current_password": "Password123",
+  "new_password": "NewPassword123",
+  "confirm_password": "NewPassword123"
+}
+```
+
+#### Success Response
+```json
+{
+  "success": true,
+  "message": "Password changed successfully"
 }
 ```
 
@@ -1374,6 +1416,42 @@ http://localhost/PHP-MVP/backend/public/api/invoices/pending-summary
   "summary": {
     "count": 5,
     "total_amount": "750.00"
+  }
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin, Provider
+
+---
+
+### Paid Summary
+
+#### Method
+```http
+GET
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/invoices/paid-summary
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json"
+}
+```
+
+#### Success Response
+```json
+{
+  "summary": {
+    "count": 10,
+    "total_amount": "1500.00"
   }
 }
 ```
