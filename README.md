@@ -1144,6 +1144,211 @@ http://localhost/PHP-MVP/backend/public/api/prescriptions
 
 ---
 
+### Update Prescription
+
+#### Method
+```http
+PUT
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/prescriptions/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "notes": "Take before meals"
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "Prescription updated successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider
+
+---
+
+### Add Prescription Item
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/prescriptions/1/items
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "medicine_name": "Paracetamol",
+  "dosage": "500mg",
+  "quantity": 10
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "Prescription item added successfully",
+  "item_id": 2
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider
+
+---
+
+### Update Prescription Item
+
+#### Method
+```http
+PUT
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/prescriptions/1/items/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "dosage": "250mg",
+  "quantity": 15
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "Prescription item updated successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider
+
+---
+
+### Delete Prescription Item
+
+#### Method
+```http
+DELETE
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/prescriptions/1/items/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+*(Empty)*
+
+#### Success Response
+```json
+{
+  "message": "Prescription item deleted successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider
+
+---
+
+### Update Prescription Status
+
+#### Method
+```http
+PUT
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/prescriptions/1/status
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+```json
+{
+  "status": "COMPLETED"
+}
+```
+
+#### Success Response
+```json
+{
+  "message": "Prescription status updated successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin, Provider
+
+---
+
 ### Verify Prescription (Pharmacist)
 
 #### Method
@@ -1547,6 +1752,43 @@ http://localhost/PHP-MVP/backend/public/api/appointments/1/notes
 
 ---
 
+### Delete Note
+
+#### Method
+```http
+DELETE
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/notes/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+*(Empty)*
+
+#### Success Response
+```json
+{
+  "message": "Note deleted successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Provider, Nurse
+
+---
+
 ## Staff Management
 
 ### Add Staff
@@ -1631,6 +1873,43 @@ http://localhost/PHP-MVP/backend/public/api/staff/3/deactivate
 * Authentication: Required
 * Allowed Roles: Admin
 * Toggles the `is_active` flag.
+
+---
+
+### Delete Staff
+
+#### Method
+```http
+DELETE
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/staff/1
+```
+
+#### Headers
+```json
+{
+  "Authorization": "Bearer <access_token>",
+  "Content-Type": "application/json",
+  "X-CSRF-TOKEN": "<csrf_token>"
+}
+```
+
+#### Request Body
+*(Empty)*
+
+#### Success Response
+```json
+{
+  "message": "Staff member deleted successfully"
+}
+```
+
+#### Notes
+* Authentication: Required
+* Allowed Roles: Admin
 
 ---
 *Generated directly from active implementation.*
