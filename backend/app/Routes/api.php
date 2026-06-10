@@ -45,7 +45,7 @@ $router->get('/api/calendar', 'CalendarController@index', [AuthMiddleware::class
 $router->get('/api/calendar/appointments/{id}/tooltip', 'CalendarController@tooltip', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::RECEPTIONIST, Roles::NURSE, Roles::PROVIDER]]]);
 
 // Billing management
-$router->get('/api/invoices', 'BillingController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::PATIENT]]]);
+$router->get('/api/invoices', 'BillingController@index', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
 $router->get('/api/invoices/my', 'BillingController@myInvoices', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::PATIENT]]]);
 $router->get('/api/invoices/pending-summary', 'BillingController@pendingSummary', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
 $router->get('/api/invoices/paid-summary', 'BillingController@paidSummary', [AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);

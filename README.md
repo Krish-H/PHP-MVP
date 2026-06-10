@@ -1509,7 +1509,7 @@ http://localhost/PHP-MVP/backend/public/api/invoices
 
 #### Notes
 * Authentication: Required
-* Allowed Roles: Admin, Provider, Patient
+* Allowed Roles: Admin, Provider
 
 ---
 

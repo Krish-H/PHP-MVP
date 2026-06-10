@@ -16,15 +16,7 @@ class BillingService {
         $this->patientRepo = new PatientRepository();
     }
 
-    public function listInvoices(int $tenantId, int $roleId, int $userId): array {
-        if ($roleId === \App\Config\Roles::PATIENT) {
-            $patient = $this->patientRepo->findByPatientUserId($userId, $tenantId);
-            if (!$patient) {
-                return [];
-            }
-            return $this->billingRepo->findAllForPatient($tenantId, $patient['id']);
-        }
-
+    public function listInvoices(int $tenantId): array {
         return $this->billingRepo->findAll($tenantId);
     }
 

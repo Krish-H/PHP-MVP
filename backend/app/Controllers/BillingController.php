@@ -16,9 +16,7 @@ class BillingController {
 
     public function index() {
         $invoices = $this->billingService->listInvoices(
-            $_SESSION['current_tenant_id'],
-            $_SESSION['current_role_id'],
-            $_SESSION['current_user_id']
+            $_SESSION['current_tenant_id']
         );
         Response::json(['invoices' => $invoices], 200);
     }
