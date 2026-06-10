@@ -1008,7 +1008,7 @@ http://localhost/PHP-MVP/backend/public/api/calendar?start_date=2026-06-01&end_d
 
 #### Notes
 * Authentication: Required
-* Allowed Roles: Admin, Doctor, Nurse, Receptionist
+* Allowed Roles: Admin, Provider, Nurse, Receptionist
 * Accepts `?date=` or `?start_date=&end_date=`.
 
 ---
@@ -1048,7 +1048,7 @@ http://localhost/PHP-MVP/backend/public/api/calendar/appointments/1/tooltip
 
 #### Notes
 * Authentication: Required
-* Allowed Roles: Admin, Doctor, Nurse, Receptionist
+* Allowed Roles: Admin, Provider, Nurse, Receptionist
 
 ---
 
@@ -1833,7 +1833,7 @@ http://localhost/PHP-MVP/backend/public/api/staff
 #### Notes
 * Authentication: Required
 * Allowed Roles: Admin
-* Role ID must be a valid staff ID (e.g. 6 for Doctor, 3 for Nurse).
+* Role ID must be a valid staff ID (e.g. 2 for Provider, 3 for Nurse).
 
 ---
 
