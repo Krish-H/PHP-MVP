@@ -814,14 +814,15 @@ http://localhost/PHP-MVP/backend/public/api/appointments
   "patient_id": 1,
   "provider_id": 2,
   "appointment_date": "2026-06-15",
-  "appointment_time": "10:00:00"
+  "appointment_time": "10:00:00",
+  "notes": "Follow-up checkup"
 }
 ```
 
 #### Success Response
 ```json
 {
-  "message": "Appointment created successfully",
+  "message": "Appointment created",
   "appointment_id": 1
 }
 ```
@@ -829,14 +830,14 @@ http://localhost/PHP-MVP/backend/public/api/appointments
 #### Error Response
 ```json
 {
-  "error": "This provider already has an appointment at the requested date and time."
+  "error": "Provider already has an appointment at this date and time"
 }
 ```
 
 #### Notes
 * Authentication: Required
 * Allowed Roles: Provider, Nurse, Patient
-* Validation Rules: Cannot exceed 10 appointments per day per tenant. Strong double-booking prevention (`uk_provider_slot`).
+* Validation Rules: Strong double-booking prevention via `slotExists` validation.
 
 ---
 
