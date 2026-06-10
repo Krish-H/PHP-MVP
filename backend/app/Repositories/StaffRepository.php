@@ -41,6 +41,9 @@ class StaffRepository {
         $where = ['u.tenant_id = :tenant_id', 'u.deleted_at IS NULL'];
         $params = ['tenant_id' => $tenantId];
 
+        $rolesStr = implode(',', self::STAFF_ROLES);
+        $where[] = "u.role_id IN ($rolesStr)";
+
         if ($roleId !== null) {
             $where[] = 'u.role_id = :role_id';
             $params['role_id'] = $roleId;
@@ -80,7 +83,8 @@ class StaffRepository {
     }
 
     public function getStaffById($id, $tenantId) {
-        $stmt = $this->db->prepare('SELECT u.id, u.name, u.email, u.role_id, r.name AS role_name, u.is_active, u.created_at, u.updated_at FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = :id AND u.tenant_id = :tenant_id AND u.deleted_at IS NULL LIMIT 1');
+        $rolesStr = implode(',', self::STAFF_ROLES);
+        $stmt = $this->db->prepare("SELECT u.id, u.name, u.email, u.role_id, r.name AS role_name, u.is_active, u.created_at, u.updated_at FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = :id AND u.tenant_id = :tenant_id AND u.deleted_at IS NULL AND u.role_id IN ($rolesStr) LIMIT 1");
         $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
         return $stmt->fetch();
     }
