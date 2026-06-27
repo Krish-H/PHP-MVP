@@ -13,6 +13,7 @@ use App\Middleware\RoleMiddleware;
 $router->post('/api/register', 'AuthController@register');
 $router->post('/api/login', 'AuthController@login');
 $router->post('/api/refresh', 'AuthController@refresh');
+$router->get('/api/csrf-token', 'AuthController@csrfToken');
 
 // Protected auth routes
 $router->post('/api/logout', 'AuthController@logout', [AuthMiddleware::class, CsrfMiddleware::class]);

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Config\Env;
 use App\Helpers\Request;
 use App\Helpers\Response;
 use App\Helpers\Validator;
@@ -111,6 +112,20 @@ class AuthController {
 }
     }
 
+    public function csrfToken() {
+        try {
+            $csrfToken = Csrf::generateToken();
+            Response::json([
+                'message' => 'CSRF token retrieved',
+                'csrf_token' => $csrfToken
+            ], 200);
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $statusCode = (is_numeric($code) && $code >= 100 && $code < 600) ? (int)$code : 500;
+            Response::json(['error' => $e->getMessage()], $statusCode);
+        }
+    }
+
     public function logout() {
         try {
             $userId = $_SESSION['current_user_id'] ?? null;
@@ -131,7 +146,7 @@ class AuthController {
 
     private function setRefreshTokenCookie($refreshToken) {
         setcookie('refresh_token', $refreshToken, [
-            'expires' => time() + (30 * 24 * 60 * 60),
+            'expires' => time() + (int) Env::get('JWT_REFRESH_TOKEN_EXPIRATION', 2592000),
             'path' => '/',
             'secure' => false,
             'httponly' => true,

@@ -30,9 +30,29 @@ use App\Core\Router;
 Env::load(__DIR__ . '/../.env');
 
 // Handle CORS
-header('Access-Control-Allow-Origin: *'); // Adjust in production
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-TOKEN');
+
+$allowedOrigins = [
+    "http://localhost:3000"
+];
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+}
+
+header("Access-Control-Allow-Credentials: true");
+
+header(
+    "Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS"
+);
+
+header(
+    "Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-TOKEN"
+);
+
+header("Access-Control-Max-Age: 86400");
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -43,6 +63,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $router = new Router();
 require __DIR__ . '/../app/Routes/api.php';
 
-$uri = isset($_GET['url']) ? '/' . rtrim($_GET['url'], '/') : '/';
+$urlParam = $_GET['url'] ?? null;
+if ($urlParam) {
+    $uri = '/' . rtrim($urlParam, '/');
+} else {
+    $uri = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+    if ($uri === '') {
+        $uri = '/';
+    }
+}
 
 $router->dispatch($uri, $_SERVER['REQUEST_METHOD']);
