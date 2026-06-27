@@ -59,7 +59,7 @@ class JWT {
             'tenant_id' => $tenantId,
             'role_id' => $roleId,
             'iat' => time(),
-            'exp' => time() + (15 * 60)
+            'exp' => time() + (int) Env::get('JWT_ACCESS_TOKEN_EXPIRATION', 900)
         ];
 
         return self::encode($payload, self::getSecret());
@@ -69,7 +69,7 @@ class JWT {
         $payload = [
             'user_id' => $userId,
             'iat' => time(),
-            'exp' => time() + (30 * 24 * 60 * 60)
+            'exp' => time() + (int) Env::get('JWT_REFRESH_TOKEN_EXPIRATION', 2592000)
         ];
 
         return self::encode($payload, self::getSecret());
