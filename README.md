@@ -9,23 +9,82 @@ http://localhost/PHP-MVP/backend/public
 
 ---
 
+## System Architecture & Recent Updates
+
+### Backend & Authentication
+- **Multi-Tenant Architecture:** Migrated to a robust database-per-tenant model. Tenant isolation is managed via dynamic database connection switching middleware, eliminating manual `tenant_id` dependencies across Service and Controller layers.
+- **Secure Token Authentication:** Centralized token management system utilizing `localStorage` for access tokens, `HttpOnly` cookies for refresh tokens, and in-memory CSRF tokens.
+- **API Security:** Axios interceptors are configured for secure API communication and automatic token refreshing. Implemented an idle-logout utility to enhance application security.
+
+### Frontend Architecture
+- **State Management:** Modular React SaaS architecture leveraging Redux Toolkit and Redux Saga for predictable state management and side-effect handling.
+- **Performance & Optimization:** Refactored `useEffect` hooks across the project to ensure optimized component lifecycles, relying only on mount/unmount triggers or external event listeners.
+- **UI/UX & Styling:** Centralized CSS styles into `index.css` for a clean separation of concerns. Developed a responsive, theme-compliant modern healthcare dashboard with offline-first form submission queues, automatic synchronization, and optimized API request cancellations.
+
+---
+
 ## Table of Contents
-1. [Authentication & Tenant Management](#authentication--tenant-management)
-2. [User Management](#user-management)
-3. [Patient Management](#patient-management)
-4. [Appointment Management](#appointment-management)
-5. [Dashboard](#dashboard)
-6. [Calendar API](#calendar-api)
-7. [Prescription & Pharmacy](#prescription--pharmacy)
-8. [Billing & Payment](#billing--payment)
-9. [Communication Module](#communication-module)
-10. [Staff Management](#staff-management)
+1. [System Architecture & Recent Updates](#system-architecture--recent-updates)
+2. [Authentication & Tenant Management](#authentication--tenant-management)
+3. [User Management](#user-management)
+4. [Patient Management](#patient-management)
+5. [Appointment Management](#appointment-management)
+6. [Dashboard](#dashboard)
+7. [Calendar API](#calendar-api)
+8. [Prescription & Pharmacy](#prescription--pharmacy)
+9. [Billing & Payment](#billing--payment)
+10. [Communication Module](#communication-module)
+11. [Staff Management](#staff-management)
 
 ---
 
 ## Authentication & Tenant Management
 
-### Register
+### Register Tenant (SaaS)
+
+#### Method
+```http
+POST
+```
+
+#### URL
+```http
+http://localhost/PHP-MVP/backend/public/api/tenants/register
+```
+
+#### Headers
+```json
+{
+  "Content-Type": "application/json"
+}
+```
+
+#### Request Body
+```json
+{
+  "company_name": "Apollo Clinic",
+  "email": "admin@apolloclinic.com",
+  "password": "SecurePassword123"
+}
+```
+
+#### Success Response
+```json
+{
+  "success": true,
+  "tenant_url": "apolloclinic.localhost",
+  "tenant_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+#### Notes
+* Authentication: Not required (Public SaaS endpoint)
+* Allowed Roles: N/A
+* Validation Rules: Company name, email, and password are required. This creates a new dedicated tenant database and an initial admin user.
+
+---
+
+### Register User
 
 #### Method
 ```http
@@ -50,8 +109,7 @@ http://localhost/PHP-MVP/backend/public/api/register
   "name": "Admin User",
   "email": "admin@example.com",
   "password": "Password123",
-  "role_id": 1,
-  "tenant_id": 1
+  "role_id": 1
 }
 ```
 
@@ -66,7 +124,7 @@ http://localhost/PHP-MVP/backend/public/api/register
 #### Notes
 * Authentication: Not required
 * Allowed Roles: N/A
-* Validation Rules: Email must be unique. Password required. Tenant ID is required.
+* Validation Rules: Email must be unique. Password required.
 
 ---
 
@@ -105,8 +163,7 @@ http://localhost/PHP-MVP/backend/public/api/login
     "id": 1,
     "name": "Admin User",
     "email": "admin@example.com",
-    "role_id": 1,
-    "tenant_id": 1
+    "role_id": 1
   },
   "access_token": "eyJhbGciOiJIUzI1Ni...",
   "refresh_token": "def456...",
@@ -222,8 +279,7 @@ http://localhost/PHP-MVP/backend/public/api/profile
     "id": 1,
     "name": "Admin User",
     "email": "admin@example.com",
-    "role_id": 1,
-    "tenant_id": 1
+    "role_id": 1
   }
 }
 ```
@@ -403,7 +459,7 @@ http://localhost/PHP-MVP/backend/public/api/users
 #### Notes
 * Authentication: Required
 * Allowed Roles: Admin
-* Validation Rules: Email must be unique within the tenant.
+* Validation Rules: Email must be unique.
 
 ---
 
@@ -622,7 +678,7 @@ http://localhost/PHP-MVP/backend/public/api/patients
 #### Notes
 * Authentication: Required
 * Allowed Roles: Provider, Nurse
-* Validation Rules: `name`, `dob`, `gender`, `phone`, `email` are required. `patient_user_id` must belong to a user with `PATIENT` role in the same tenant and cannot be already mapped.
+* Validation Rules: `name`, `dob`, `gender`, `phone`, `email` are required. `patient_user_id` must belong to a user with `PATIENT` role and cannot be already mapped.
 
 ---
 
