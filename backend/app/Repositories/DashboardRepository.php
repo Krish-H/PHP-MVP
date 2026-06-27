@@ -11,21 +11,21 @@ class DashboardRepository {
         $this->db = Database::getConnection();
     }
 
-    public function countPatients($tenantId) {
-        $stmt = $this->db->prepare('SELECT COUNT(*) FROM patients WHERE tenant_id = :tenant_id AND is_deleted = 0');
-        $stmt->execute(['tenant_id' => $tenantId]);
+    public function countPatients() {
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM patients WHERE is_deleted = 0');
+        $stmt->execute();
         return (int) $stmt->fetchColumn();
     }
 
-    public function countAppointments($tenantId) {
-        $stmt = $this->db->prepare('SELECT COUNT(*) FROM appointments WHERE tenant_id = :tenant_id');
-        $stmt->execute(['tenant_id' => $tenantId]);
+    public function countAppointments() {
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM appointments');
+        $stmt->execute();
         return (int) $stmt->fetchColumn();
     }
 
-    public function countAppointmentsByStatus($tenantId) {
-        $stmt = $this->db->prepare('SELECT status, COUNT(*) AS count FROM appointments WHERE tenant_id = :tenant_id GROUP BY status');
-        $stmt->execute(['tenant_id' => $tenantId]);
+    public function countAppointmentsByStatus() {
+        $stmt = $this->db->prepare('SELECT status, COUNT(*) AS count FROM appointments GROUP BY status');
+        $stmt->execute();
 
         $result = [];
         foreach ($stmt->fetchAll() as $row) {

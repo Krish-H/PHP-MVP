@@ -15,21 +15,21 @@ class UserService {
         $this->userRepo = new UserRepository();
     }
 
-    public function listUsers($tenantId, $page = 1, $limit = 10, $name = null, $email = null) {
+    public function listUsers($page = 1, $limit = 10, $name = null, $email = null) {
         $page = max(1, (int)$page);
         $limit = max(1, (int)$limit);
-        return $this->userRepo->getUsers($tenantId, $page, $limit, $name, $email);
+        return $this->userRepo->getUsers($page, $limit, $name, $email);
     }
 
-    public function getUser($id, $tenantId) {
-        $user = $this->userRepo->findByIdWithTenant($id, $tenantId);
+    public function getUser($id) {
+        $user = $this->userRepo->findByIdWithTenant($id);
         if (!$user) {
             throw new Exception('User not found', 404);
         }
         return $user;
     }
 
-    public function createUser($data, $tenantId) {
+    public function createUser($data) {
         $this->ensureAdmin();
 
         if (!Validator::required($data, ['name', 'email', 'password', 'role'])) {
@@ -54,16 +54,16 @@ class UserService {
         }
 
         $passwordHash = Hash::make($data['password']);
-        $userId = $this->userRepo->create($data['email'], $passwordHash, $role, $tenantId, 1, $data['name']);
+        $userId = $this->userRepo->create($data['email'], $passwordHash, $role, 1, $data['name']);
 
         return $userId;
     }
 
-    public function updateUser($id, $data, $tenantId) {
+    public function updateUser($id, $data) {
         $this->ensureAdmin();
 
         // Ensure user exists in this tenant
-        $this->getUser($id, $tenantId);
+        $this->getUser($id);
 
         if (!Validator::required($data, ['name', 'email', 'role'])) {
             throw new Exception('Name, email, and role are required', 400);
@@ -88,18 +88,18 @@ class UserService {
             'role_id' => $role
         ];
 
-        return $this->userRepo->update($id, $tenantId, $updateData);
+        return $this->userRepo->update($id, $updateData);
     }
 
-    public function deleteUser($id, $tenantId, $authenticatedUserId) {
+    public function deleteUser($id, $authenticatedUserId) {
         if ($id == $authenticatedUserId) {
             throw new Exception('Cannot delete your own account', 400);
         }
 
         // Ensure user exists in this tenant
-        $this->getUser($id, $tenantId);
+        $this->getUser($id);
 
-        return $this->userRepo->softDelete($id, $tenantId);
+        return $this->userRepo->softDelete($id);
     }
 
     private function isValidRole($role) {

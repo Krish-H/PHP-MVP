@@ -15,17 +15,14 @@ class BillingController {
     }
 
     public function index() {
-        $invoices = $this->billingService->listInvoices(
-            $_SESSION['current_tenant_id']
-        );
+        $invoices = $this->billingService->listInvoices();
         Response::json(['invoices' => $invoices], 200);
     }
 
     public function myInvoices() {
         try {
             $invoices = $this->billingService->getMyInvoices(
-                $_SESSION['current_user_id'],
-                $_SESSION['current_tenant_id']
+                $_SESSION['current_user_id']
             );
             Response::json(['invoices' => $invoices], 200);
         } catch (Exception $e) {
@@ -35,7 +32,7 @@ class BillingController {
 
     public function pendingSummary() {
         try {
-            $summary = $this->billingService->getPendingSummary($_SESSION['current_tenant_id']);
+            $summary = $this->billingService->getPendingSummary();
             Response::json($summary, 200);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
@@ -44,7 +41,7 @@ class BillingController {
 
     public function paidSummary() {
         try {
-            $summary = $this->billingService->getPaidSummary($_SESSION['current_tenant_id']);
+            $summary = $this->billingService->getPaidSummary();
             Response::json($summary, 200);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
@@ -59,7 +56,7 @@ class BillingController {
         }
 
         try {
-            $invoiceId = $this->billingService->createInvoice($data, $_SESSION['current_tenant_id']);
+            $invoiceId = $this->billingService->createInvoice($data);
             Response::json(['message' => 'Invoice generated', 'invoice_id' => $invoiceId], 201);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
@@ -74,7 +71,7 @@ class BillingController {
         }
 
         try {
-            $this->billingService->updatePaymentStatus($params['id'], $data, $_SESSION['current_tenant_id']);
+            $this->billingService->updatePaymentStatus($params['id'], $data);
             Response::json(['message' => 'Invoice status updated'], 200);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);

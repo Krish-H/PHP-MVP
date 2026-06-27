@@ -65,9 +65,10 @@ class JWT {
         return self::encode($payload, self::getSecret());
     }
 
-    public static function generateRefreshToken($userId) {
+    public static function generateRefreshToken($userId, $tenantId = null) {
         $payload = [
             'user_id' => $userId,
+            'tenant_id' => $tenantId,
             'iat' => time(),
             'exp' => time() + (int) Env::get('JWT_REFRESH_TOKEN_EXPIRATION', 2592000)
         ];

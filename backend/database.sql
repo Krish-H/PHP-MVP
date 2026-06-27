@@ -5,21 +5,7 @@
 CREATE DATABASE IF NOT EXISTS php_mvp_db;
 USE php_mvp_db;
 
--- ============================================================
--- TABLE: tenants
--- ============================================================
 
-CREATE TABLE IF NOT EXISTS tenants (
-id INT AUTO_INCREMENT PRIMARY KEY,
-name VARCHAR(255) NOT NULL ,
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-INSERT INTO tenants (name)
-SELECT 'Default Hospital'
-WHERE NOT EXISTS (
-SELECT 1 FROM tenants WHERE name = 'Default Hospital'
-);
 
 -- ============================================================
 -- TABLE: roles
@@ -61,7 +47,6 @@ WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'Receptionist');
 
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL,
     role_id INT NOT NULL,
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -107,7 +92,6 @@ CONSTRAINT fk_refresh_user
 CREATE TABLE IF NOT EXISTS patients (
 id INT AUTO_INCREMENT PRIMARY KEY,
 
-tenant_id INT NOT NULL,
 user_id INT NOT NULL,
 patient_user_id INT NULL,
 
@@ -129,12 +113,7 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP,
 
-INDEX idx_patients_tenant (tenant_id),
 INDEX idx_patients_user (user_id),
-
-CONSTRAINT fk_patients_tenant
-    FOREIGN KEY (tenant_id)
-    REFERENCES tenants(id),
 
 CONSTRAINT fk_patients_user
     FOREIGN KEY (user_id)
@@ -157,7 +136,6 @@ CREATE TABLE IF NOT EXISTS appointments (
 id INT AUTO_INCREMENT PRIMARY KEY,
 
 
-tenant_id INT NOT NULL,
 patient_id INT NOT NULL,
 provider_id INT NOT NULL,
 
@@ -178,11 +156,9 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP,
 
-INDEX idx_appt_tenant (tenant_id),
 INDEX idx_appt_patient (patient_id),
 INDEX idx_appt_provider (provider_id),
 INDEX idx_appt_date (appointment_date),
-INDEX idx_appt_tenant_date (tenant_id, appointment_date),
 
 UNIQUE KEY uk_provider_slot (
     provider_id,
@@ -190,9 +166,6 @@ UNIQUE KEY uk_provider_slot (
     appointment_time
 ),
 
-CONSTRAINT fk_appt_tenant
-    FOREIGN KEY (tenant_id)
-    REFERENCES tenants(id),
 
 CONSTRAINT fk_appt_patient
     FOREIGN KEY (patient_id)
@@ -213,17 +186,14 @@ CONSTRAINT fk_appt_provider
 
 CREATE TABLE IF NOT EXISTS invoices (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL,
     patient_id INT NOT NULL,
     invoice_number VARCHAR(50) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     status ENUM('pending', 'paid') NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_invoice_tenant (tenant_id),
     INDEX idx_invoice_patient (patient_id),
-    UNIQUE KEY uk_invoice_number (tenant_id, invoice_number),
-    CONSTRAINT fk_invoice_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+    UNIQUE KEY uk_invoice_number (invoice_number),
     CONSTRAINT fk_invoice_patient FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE RESTRICT
 );
 

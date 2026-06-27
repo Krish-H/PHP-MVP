@@ -49,7 +49,8 @@ class AuthService {
 
         $this->tokenRepo->revokeAllForUser($user['id']);
 
-        $tokens = $this->generateUserTokens($user['id'], $user['tenant_id'], $user['role_id']);
+        $tenantId = $_SESSION['tenant_id'] ?? null;
+        $tokens = $this->generateUserTokens($user['id'], $tenantId, $user['role_id']);
         
         return [
             'tokens' => $tokens,
@@ -57,7 +58,7 @@ class AuthService {
                 'id' => $user['id'],
                 'email' => $user['email'],
                 'role_id' => $user['role_id'],
-                'tenant_id' => $user['tenant_id']
+                'tenant_id' => $tenantId
             ]
         ];
     }
@@ -80,14 +81,15 @@ class AuthService {
         }
 
         $this->tokenRepo->revokeById($tokenRow['id']);
-        $tokens = $this->generateUserTokens($user['id'], $user['tenant_id'], $user['role_id']);
+        $tenantId = $decoded['tenant_id'] ?? $_SESSION['tenant_id'] ?? null;
+        $tokens = $this->generateUserTokens($user['id'], $tenantId, $user['role_id']);
 
         return $tokens;
     }
 
     public function logout($userId) {
         $this->tokenRepo->revokeAllForUser($userId);
-        unset($_SESSION['access_token'], $_SESSION['current_user_id'], $_SESSION['current_role_id'], $_SESSION['current_tenant_id']);
+        unset($_SESSION['access_token'], $_SESSION['current_user_id'], $_SESSION['current_role_id'], $_SESSION['current_tenant_id'], $_SESSION['tenant_id'], $_SESSION['tenant_db']);
 
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
@@ -98,7 +100,7 @@ class AuthService {
 
     private function generateUserTokens($userId, $tenantId, $roleId) {
         $accessToken = JWT::generateAccessToken($userId, $tenantId, $roleId);
-        $refreshToken = JWT::generateRefreshToken($userId);
+        $refreshToken = JWT::generateRefreshToken($userId, $tenantId);
 
         $this->tokenRepo->store($userId, $refreshToken);
 

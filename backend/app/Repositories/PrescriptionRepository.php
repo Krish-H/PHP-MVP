@@ -31,9 +31,9 @@ class PrescriptionRepository {
      * Find all prescriptions for a tenant.
      * Optionally filter by patient_id, provider_id, or status.
      */
-    public function findAll(int $tenantId, ?int $patientId = null, ?int $providerId = null, ?string $status = null): array {
-        $sql = 'SELECT * FROM prescriptions WHERE tenant_id = :tenant_id';
-        $params = ['tenant_id' => $tenantId];
+    public function findAll(?int $patientId = null, ?int $providerId = null, ?string $status = null): array {
+        $sql = 'SELECT * FROM prescriptions WHERE 1=1';
+        $params = [];
 
         if ($patientId !== null) {
             $sql .= ' AND patient_id = :patient_id';
@@ -70,14 +70,13 @@ class PrescriptionRepository {
     /**
      * Find prescription by ID with tenant isolation.
      */
-    public function findById(int $id, int $tenantId): ?array {
+    public function findById(int $id): ?array {
         $stmt = $this->db->prepare(
             'SELECT * FROM prescriptions
              WHERE id        = :id
-               AND tenant_id = :tenant_id
              LIMIT 1'
         );
-        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+        $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
 
         if (!$row) {
@@ -95,8 +94,8 @@ class PrescriptionRepository {
     /**
      * Get prescription with all items.
      */
-    public function getWithItems(int $id, int $tenantId): ?array {
-        $prescription = $this->findById($id, $tenantId);
+    public function getWithItems(int $id): ?array {
+        $prescription = $this->findById($id);
 
         if (!$prescription) {
             return null;
@@ -111,14 +110,13 @@ class PrescriptionRepository {
     /**
      * Check if patient exists for the given tenant.
      */
-    public function patientExists(int $patientId, int $tenantId): bool {
+    public function patientExists(int $patientId): bool {
         $stmt = $this->db->prepare(
             'SELECT COUNT(*) FROM patients
              WHERE id        = :id
-               AND tenant_id = :tenant_id
                AND is_deleted = 0'
         );
-        $stmt->execute(['id' => $patientId, 'tenant_id' => $tenantId]);
+        $stmt->execute(['id' => $patientId]);
 
         return (int) $stmt->fetchColumn() > 0;
     }
@@ -126,16 +124,15 @@ class PrescriptionRepository {
     /**
      * Check if provider (user with provider role) exists for the given tenant.
      */
-    public function providerExists(int $providerId, int $tenantId): bool {
+    public function providerExists(int $providerId): bool {
         $stmt = $this->db->prepare(
             'SELECT COUNT(*) FROM users
              WHERE id         = :id
-               AND tenant_id  = :tenant_id
                AND role_id    IN (2, 6)
                AND is_active  = 1
                AND deleted_at IS NULL'
         );
-        $stmt->execute(['id' => $providerId, 'tenant_id' => $tenantId]);
+        $stmt->execute(['id' => $providerId]);
 
         return (int) $stmt->fetchColumn() > 0;
     }
@@ -148,16 +145,15 @@ class PrescriptionRepository {
      * Create a new prescription.
      * Initial status is 'PENDING'.
      */
-    public function create(array $data, int $tenantId): int {
+    public function create(array $data): int {
         $stmt = $this->db->prepare(
             'INSERT INTO prescriptions
-             (tenant_id, patient_id, provider_id, status, notes, created_at, updated_at)
+             (patient_id, provider_id, status, notes, created_at, updated_at)
              VALUES
-             (:tenant_id, :patient_id, :provider_id, :status, :notes, NOW(), NOW())'
+             (:patient_id, :provider_id, :status, :notes, NOW(), NOW())'
         );
 
         $stmt->execute([
-            'tenant_id'  => $tenantId,
             'patient_id' => (int) $data['patient_id'],
             'provider_id' => (int) $data['provider_id'],
             'status'     => 'PENDING',
@@ -171,10 +167,10 @@ class PrescriptionRepository {
      * Update prescription fields.
      * Allowed fields: notes, status
      */
-    public function update(int $id, int $tenantId, array $data): bool {
+    public function update(int $id, array $data): bool {
         $allowed    = ['notes', 'status'];
         $setClauses = [];
-        $params     = ['id' => $id, 'tenant_id' => $tenantId];
+        $params     = ['id' => $id];
 
         foreach ($data as $field => $value) {
             if (in_array($field, $allowed, true)) {
@@ -194,7 +190,7 @@ class PrescriptionRepository {
 
         $setClauses[] = 'updated_at = NOW()';
         $sql = 'UPDATE prescriptions SET ' . implode(', ', $setClauses) .
-               ' WHERE id = :id AND tenant_id = :tenant_id';
+               ' WHERE id = :id';
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -205,15 +201,14 @@ class PrescriptionRepository {
     /**
      * Update prescription status.
      */
-    public function updateStatus(int $id, int $tenantId, string $status): bool {
+    public function updateStatus(int $id, string $status): bool {
         $stmt = $this->db->prepare(
             'UPDATE prescriptions
              SET status     = :status,
                  updated_at = NOW()
-             WHERE id       = :id
-               AND tenant_id = :tenant_id'
+             WHERE id       = :id'
         );
-        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId, 'status' => $status]);
+        $stmt->execute(['id' => $id, 'status' => $status]);
 
         return $stmt->rowCount() > 0;
     }

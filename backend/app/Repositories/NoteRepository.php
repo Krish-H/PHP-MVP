@@ -26,18 +26,16 @@ class NoteRepository {
     /**
      * List all active notes for a given appointment, scoped to tenant.
      */
-    public function findByAppointment(int $appointmentId, int $tenantId): array {
+    public function findByAppointment(int $appointmentId): array {
         $stmt = $this->db->prepare(
             'SELECT id, appointment_id, user_id, note, created_at, updated_at
              FROM   appointment_notes
              WHERE  appointment_id = :appointment_id
-               AND  tenant_id      = :tenant_id
                AND  is_deleted     = 0
              ORDER BY created_at ASC'
         );
         $stmt->execute([
             'appointment_id' => $appointmentId,
-            'tenant_id'      => $tenantId,
         ]);
 
         return $stmt->fetchAll();
@@ -46,16 +44,15 @@ class NoteRepository {
     /**
      * Find a single note by ID, scoped to tenant.
      */
-    public function findById(int $id, int $tenantId): ?array {
+    public function findById(int $id): ?array {
         $stmt = $this->db->prepare(
             'SELECT id, appointment_id, user_id, note, created_at, updated_at
              FROM   appointment_notes
              WHERE  id         = :id
-               AND  tenant_id  = :tenant_id
                AND  is_deleted = 0
              LIMIT 1'
         );
-        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+        $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
 
         return $row ?: null;
@@ -68,16 +65,15 @@ class NoteRepository {
     /**
      * Insert a new note. Returns the new note ID.
      */
-    public function create(int $appointmentId, int $tenantId, int $userId, string $encryptedNote): int {
+    public function create(int $appointmentId, int $userId, string $encryptedNote): int {
         $stmt = $this->db->prepare(
             'INSERT INTO appointment_notes
-             (appointment_id, tenant_id, user_id, note, created_at, updated_at)
+             (appointment_id, user_id, note, created_at, updated_at)
              VALUES
-             (:appointment_id, :tenant_id, :user_id, :note, NOW(), NOW())'
+             (:appointment_id, :user_id, :note, NOW(), NOW())'
         );
         $stmt->execute([
             'appointment_id' => $appointmentId,
-            'tenant_id'      => $tenantId,
             'user_id'        => $userId,
             'note'           => $encryptedNote,
         ]);
@@ -88,20 +84,18 @@ class NoteRepository {
     /**
      * Update note content. Only updates if the note belongs to $userId.
      */
-    public function update(int $id, int $tenantId, int $userId, string $encryptedNote): bool {
+    public function update(int $id, int $userId, string $encryptedNote): bool {
         $stmt = $this->db->prepare(
             'UPDATE appointment_notes
              SET    note       = :note,
                     updated_at = NOW()
              WHERE  id         = :id
-               AND  tenant_id  = :tenant_id
                AND  user_id    = :user_id
                AND  is_deleted = 0'
         );
         $stmt->execute([
             'note'      => $encryptedNote,
             'id'        => $id,
-            'tenant_id' => $tenantId,
             'user_id'   => $userId,
         ]);
 
@@ -111,19 +105,17 @@ class NoteRepository {
     /**
      * Soft-delete a note. Only deletes if the note belongs to $userId.
      */
-    public function delete(int $id, int $tenantId, int $userId): bool {
+    public function delete(int $id, int $userId): bool {
         $stmt = $this->db->prepare(
             'UPDATE appointment_notes
              SET    is_deleted = 1,
                     deleted_at = NOW()
              WHERE  id         = :id
-               AND  tenant_id  = :tenant_id
                AND  user_id    = :user_id
                AND  is_deleted = 0'
         );
         $stmt->execute([
             'id'        => $id,
-            'tenant_id' => $tenantId,
             'user_id'   => $userId,
         ]);
 

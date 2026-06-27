@@ -33,16 +33,16 @@ class CalendarService {
     // Fetch by date
     // ----------------------------------------------------------------
 
-    public function getByDate(array $params, int $tenantId, int $roleId, int $userId): array {
+    public function getByDate(array $params, int $roleId, int $userId): array {
         if (empty($params['date'])) {
-            throw new Exception('Query param "date" is required (YYYY-MM-DD)', 422);
+            throw new Exception('Missing required parameter: date', 422);
         }
 
         $this->validateDateFormat($params['date']);
 
         $providerId = $this->resolveProviderScope($roleId, $userId);
 
-        $rows = $this->calendarRepo->fetchByDate($tenantId, $params['date'], $providerId);
+        $rows = $this->calendarRepo->fetchByDate($params['date'], $providerId);
 
         return $this->formatAppointments($rows);
     }
@@ -51,9 +51,9 @@ class CalendarService {
     // Fetch by range
     // ----------------------------------------------------------------
 
-    public function getByRange(array $params, int $tenantId, int $roleId, int $userId): array {
+    public function getByRange(array $params, int $roleId, int $userId): array {
         if (empty($params['start_date']) || empty($params['end_date'])) {
-            throw new Exception('Query params "start_date" and "end_date" are required (YYYY-MM-DD)', 422);
+            throw new Exception('Missing required parameters: start_date, end_date', 422);
         }
 
         $this->validateDateFormat($params['start_date']);
@@ -66,7 +66,6 @@ class CalendarService {
         $providerId = $this->resolveProviderScope($roleId, $userId);
 
         $rows = $this->calendarRepo->fetchByRange(
-            $tenantId,
             $params['start_date'],
             $params['end_date'],
             $providerId
@@ -79,8 +78,8 @@ class CalendarService {
     // Tooltip
     // ----------------------------------------------------------------
 
-    public function getTooltip(int $id, int $tenantId, int $roleId, int $userId): array {
-        $row = $this->calendarRepo->fetchTooltip($id, $tenantId);
+    public function getTooltip(int $id, int $roleId, int $userId): array {
+        $row = $this->calendarRepo->fetchTooltip($id);
 
         if (!$row) {
             throw new Exception('Appointment not found', 404);

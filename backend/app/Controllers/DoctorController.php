@@ -25,7 +25,7 @@ class DoctorController {
             $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
             $roleId = isset($_GET['role_id']) ? (int)$_GET['role_id'] : null;
 
-            $result = $this->staffService->getStaffList($tenantId, $page, $limit, $roleId);
+            $result = $this->staffService->getStaffList($page, $limit, $roleId);
             Response::json($result, 200);
         } catch (Exception $e) {
             $statusCode = (is_numeric($e->getCode()) && $e->getCode() >= 100 && $e->getCode() < 600) ? $e->getCode() : 500;
@@ -40,7 +40,7 @@ class DoctorController {
                 Response::json(['error' => 'Unauthorized - tenant isolation missing'], 401);
             }
 
-            $staff = $this->staffService->getStaffById($params['id'], $tenantId);
+            $staff = $this->staffService->getStaffById($params['id']);
             Response::json(['staff' => $staff], 200);
         } catch (Exception $e) {
             $statusCode = (is_numeric($e->getCode()) && $e->getCode() >= 100 && $e->getCode() < 600) ? $e->getCode() : 500;
@@ -60,7 +60,7 @@ class DoctorController {
                 Response::json(['error' => 'Invalid request body'], 400);
             }
 
-            $staffId = $this->staffService->createStaff($data, $tenantId);
+            $staffId = $this->staffService->createStaff($data);
             Response::json(['message' => 'Staff created successfully', 'staff_id' => $staffId], 201);
         } catch (Exception $e) {
             $statusCode = (is_numeric($e->getCode()) && $e->getCode() >= 100 && $e->getCode() < 600) ? $e->getCode() : 500;
@@ -80,7 +80,7 @@ class DoctorController {
                 Response::json(['error' => 'Invalid request body'], 400);
             }
 
-            $this->staffService->updateStaff($params['id'], $data, $tenantId);
+            $this->staffService->updateStaff($params['id'], $data);
             Response::json(['message' => 'Staff updated successfully'], 200);
         } catch (Exception $e) {
             $statusCode = (is_numeric($e->getCode()) && $e->getCode() >= 100 && $e->getCode() < 600) ? $e->getCode() : 500;
@@ -95,7 +95,7 @@ class DoctorController {
                 Response::json(['error' => 'Unauthorized - tenant isolation missing'], 401);
             }
 
-            $this->staffService->activateStaff($params['id'], $tenantId);
+            $this->staffService->activateStaff($params['id']);
             Response::json(['message' => 'Staff activated successfully'], 200);
         } catch (Exception $e) {
             $statusCode = (is_numeric($e->getCode()) && $e->getCode() >= 100 && $e->getCode() < 600) ? $e->getCode() : 500;
@@ -110,7 +110,7 @@ class DoctorController {
                 Response::json(['error' => 'Unauthorized - tenant isolation missing'], 401);
             }
 
-            $this->staffService->deactivateStaff($params['id'], $tenantId);
+            $this->staffService->deactivateStaff($params['id']);
             Response::json(['message' => 'Staff deactivated successfully'], 200);
         } catch (Exception $e) {
             $statusCode = (is_numeric($e->getCode()) && $e->getCode() >= 100 && $e->getCode() < 600) ? $e->getCode() : 500;
@@ -127,7 +127,7 @@ class DoctorController {
                 Response::json(['error' => 'Unauthorized - tenant isolation missing'], 401);
             }
 
-            $this->staffService->softDeleteStaff($params['id'], $tenantId, $authenticatedUserId);
+            $this->staffService->softDeleteStaff($params['id'], $authenticatedUserId);
             Response::json(['message' => 'Staff deleted successfully'], 200);
         } catch (Exception $e) {
             $statusCode = (is_numeric($e->getCode()) && $e->getCode() >= 100 && $e->getCode() < 600) ? $e->getCode() : 500;

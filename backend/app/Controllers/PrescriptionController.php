@@ -43,7 +43,6 @@ class PrescriptionController {
             $status = isset($_GET['status']) ? $_GET['status'] : null;
 
             $prescriptions = $this->prescriptionService->listPrescriptions(
-                $_SESSION['current_tenant_id'],
                 $patientId,
                 $providerId,
                 $status
@@ -62,8 +61,7 @@ class PrescriptionController {
     public function show($params) {
         try {
             $prescription = $this->prescriptionService->getPrescription(
-                $params['id'],
-                $_SESSION['current_tenant_id']
+                $params['id']
             );
 
             Response::json(['prescription' => $prescription], 200);
@@ -103,8 +101,7 @@ class PrescriptionController {
 
         try {
             $prescriptionId = $this->prescriptionService->createPrescription(
-                $data,
-                $_SESSION['current_tenant_id']
+                $data
             );
 
             Response::json(
@@ -135,8 +132,7 @@ class PrescriptionController {
         try {
             $this->prescriptionService->updatePrescription(
                 $params['id'],
-                $data,
-                $_SESSION['current_tenant_id']
+                $data
             );
 
             Response::json(['message' => 'Prescription updated'], 200);
@@ -164,8 +160,7 @@ class PrescriptionController {
         try {
             $this->prescriptionService->updatePrescriptionStatus(
                 $params['id'],
-                $data,
-                $_SESSION['current_tenant_id']
+                $data
             );
 
             Response::json(['message' => 'Prescription status updated'], 200);
@@ -199,8 +194,7 @@ class PrescriptionController {
         try {
             $itemId = $this->prescriptionService->addItem(
                 $params['id'],
-                $data,
-                $_SESSION['current_tenant_id']
+                $data
             );
 
             Response::json(
@@ -234,8 +228,7 @@ class PrescriptionController {
             $this->prescriptionService->updateItem(
                 $params['id'],
                 $params['item_id'],
-                $data,
-                $_SESSION['current_tenant_id']
+                $data
             );
 
             Response::json(['message' => 'Item updated'], 200);
@@ -252,8 +245,7 @@ class PrescriptionController {
         try {
             $this->prescriptionService->deleteItem(
                 $params['id'],
-                $params['item_id'],
-                $_SESSION['current_tenant_id']
+                $params['item_id']
             );
 
             Response::json(['message' => 'Item deleted'], 200);
@@ -274,8 +266,7 @@ class PrescriptionController {
     public function verify($params) {
         try {
             $this->prescriptionService->verifyPrescription(
-                $params['id'],
-                $_SESSION['current_tenant_id']
+                $params['id']
             );
 
             Response::json(['message' => 'Prescription verified'], 200);
@@ -293,8 +284,7 @@ class PrescriptionController {
     public function dispense($params) {
         try {
             $this->prescriptionService->dispensePrescription(
-                $params['id'],
-                $_SESSION['current_tenant_id']
+                $params['id']
             );
 
             Response::json(['message' => 'Prescription dispensed'], 200);
