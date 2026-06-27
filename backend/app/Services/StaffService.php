@@ -22,20 +22,12 @@ class StaffService {
         $this->staffRepo = new StaffRepository();
     }
 
-    public function getStaffList($tenantId, $page = 1, $limit = 20, $roleId = null) {
-        if (!$tenantId) {
-            throw new Exception('Unauthorized - tenant missing', 401);
-        }
-
-        return $this->staffRepo->getStaffList($tenantId, $page, $limit, $roleId);
+    public function getStaffList($page = 1, $limit = 20, $roleId = null) {
+        return $this->staffRepo->getStaffList($page, $limit, $roleId);
     }
 
-    public function getStaffById($id, $tenantId) {
-        if (!$tenantId) {
-            throw new Exception('Unauthorized - tenant missing', 401);
-        }
-
-        $staff = $this->staffRepo->getStaffById($id, $tenantId);
+    public function getStaffById($id) {
+        $staff = $this->staffRepo->getStaffById($id);
         if (!$staff) {
             throw new Exception('Staff member not found', 404);
         }
@@ -43,7 +35,7 @@ class StaffService {
         return $staff;
     }
 
-    public function createStaff($data, $tenantId) {
+    public function createStaff($data) {
         $this->ensureAdmin();
 
         if (!Validator::required($data, ['name', 'email', 'password', 'role_id'])) {
@@ -63,18 +55,18 @@ class StaffService {
             throw new Exception('Invalid staff role assignment', 400);
         }
 
-        if ($this->staffRepo->emailExists($data['email'], $tenantId)) {
+        if ($this->staffRepo->emailExists($data['email'])) {
             throw new Exception('Email already exists for this tenant', 409);
         }
 
         $passwordHash = Hash::make($data['password']);
-        return $this->staffRepo->createStaff($tenantId, $data['name'], $data['email'], $passwordHash, $roleId, 1);
+        return $this->staffRepo->createStaff($data['name'], $data['email'], $passwordHash, $roleId, 1);
     }
 
-    public function updateStaff($id, $data, $tenantId) {
+    public function updateStaff($id, $data) {
         $this->ensureAdmin();
 
-        $this->getStaffById($id, $tenantId);
+        $this->getStaffById($id);
 
         if (empty($data) || (!isset($data['name']) && !isset($data['email']) && !isset($data['role_id']) && !isset($data['password']))) {
             throw new Exception('At least one update field is required', 400);
@@ -95,7 +87,7 @@ class StaffService {
             }
         }
 
-        if (isset($data['email']) && $this->staffRepo->emailExists($data['email'], $tenantId, $id)) {
+        if (isset($data['email']) && $this->staffRepo->emailExists($data['email'], $id)) {
             throw new Exception('Email already exists for this tenant', 409);
         }
 
@@ -104,7 +96,7 @@ class StaffService {
             unset($data['password']);
         }
 
-        $updated = $this->staffRepo->updateStaff($id, $tenantId, $data);
+        $updated = $this->staffRepo->updateStaff($id, $data);
         if (!$updated) {
             throw new Exception('Unable to update staff member', 400);
         }
@@ -112,29 +104,29 @@ class StaffService {
         return true;
     }
 
-    public function activateStaff($id, $tenantId) {
+    public function activateStaff($id) {
         $this->ensureAdmin();
-        $this->getStaffById($id, $tenantId);
+        $this->getStaffById($id);
 
-        if (!$this->staffRepo->updateStaffStatus($id, $tenantId, 1)) {
+        if (!$this->staffRepo->updateStaffStatus($id, 1)) {
             throw new Exception('Unable to activate staff member', 400);
         }
 
         return true;
     }
 
-    public function deactivateStaff($id, $tenantId) {
+    public function deactivateStaff($id) {
         $this->ensureAdmin();
-        $this->getStaffById($id, $tenantId);
+        $this->getStaffById($id);
 
-        if (!$this->staffRepo->updateStaffStatus($id, $tenantId, 0)) {
+        if (!$this->staffRepo->updateStaffStatus($id, 0)) {
             throw new Exception('Unable to deactivate staff member', 400);
         }
 
         return true;
     }
 
-    public function softDeleteStaff($id, $tenantId, $authenticatedUserId) {
+    public function softDeleteStaff($id, $authenticatedUserId) {
         $this->ensureAdmin();
 
         if ($authenticatedUserId === null) {
@@ -145,9 +137,9 @@ class StaffService {
             throw new Exception('Cannot delete your own staff account', 400);
         }
 
-        $this->getStaffById($id, $tenantId);
+        $this->getStaffById($id);
 
-        if (!$this->staffRepo->softDeleteStaff($id, $tenantId)) {
+        if (!$this->staffRepo->softDeleteStaff($id)) {
             throw new Exception('Unable to delete staff member', 400);
         }
 

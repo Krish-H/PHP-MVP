@@ -11,13 +11,12 @@ class BillingRepository {
         $this->db = Database::getConnection();
     }
 
-    public function create(array $data, int $tenantId): int {
+    public function create(array $data): int {
         $stmt = $this->db->prepare('
-            INSERT INTO invoices (tenant_id, patient_id, invoice_number, amount, status)
-            VALUES (:tenant_id, :patient_id, :invoice_number, :amount, :status)
+            INSERT INTO invoices (patient_id, invoice_number, amount, status)
+            VALUES (:patient_id, :invoice_number, :amount, :status)
         ');
         $stmt->execute([
-            'tenant_id'      => $tenantId,
             'patient_id'     => $data['patient_id'],
             'invoice_number' => $data['invoice_number'],
             'amount'         => $data['amount'],
@@ -26,50 +25,48 @@ class BillingRepository {
         return (int) $this->db->lastInsertId();
     }
 
-    public function findAll(int $tenantId): array {
+    public function findAll(): array {
         $stmt = $this->db->prepare('
             SELECT * FROM invoices
-            WHERE tenant_id = :tenant_id
             ORDER BY created_at DESC
         ');
-        $stmt->execute(['tenant_id' => $tenantId]);
+        $stmt->execute();
         return $stmt->fetchAll();
     }
 
-    public function findAllForPatient(int $tenantId, int $patientId): array {
+    public function findAllForPatient(int $patientId): array {
         $stmt = $this->db->prepare('
             SELECT * FROM invoices
-            WHERE tenant_id = :tenant_id AND patient_id = :patient_id
+            WHERE patient_id = :patient_id
             ORDER BY created_at DESC
         ');
-        $stmt->execute(['tenant_id' => $tenantId, 'patient_id' => $patientId]);
+        $stmt->execute(['patient_id' => $patientId]);
         return $stmt->fetchAll();
     }
 
-    public function findByPatientId(int $patientId, int $tenantId): array {
-        return $this->findAllForPatient($tenantId, $patientId);
+    public function findByPatientId(int $patientId): array {
+        return $this->findAllForPatient($patientId);
     }
 
-    public function findById(int $id, int $tenantId) {
+    public function findById(int $id) {
         $stmt = $this->db->prepare('
             SELECT * FROM invoices
-            WHERE id = :id AND tenant_id = :tenant_id
+            WHERE id = :id
             LIMIT 1
         ');
-        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+        $stmt->execute(['id' => $id]);
         return $stmt->fetch();
     }
 
-    public function updateStatus(int $id, string $status, int $tenantId): bool {
+    public function updateStatus(int $id, string $status): bool {
         $stmt = $this->db->prepare('
             UPDATE invoices
             SET status = :status
-            WHERE id = :id AND tenant_id = :tenant_id
+            WHERE id = :id
         ');
         $stmt->execute([
             'status'    => $status,
-            'id'        => $id,
-            'tenant_id' => $tenantId
+            'id'        => $id
         ]);
         return $stmt->rowCount() > 0;
     }
@@ -87,23 +84,23 @@ class BillingRepository {
         return (int) $this->db->lastInsertId();
     }
 
-    public function getPendingSummary(int $tenantId): array {
+    public function getPendingSummary(): array {
         $stmt = $this->db->prepare('
             SELECT COUNT(*) as pending_count, COALESCE(SUM(amount), 0) as pending_amount
             FROM invoices
-            WHERE tenant_id = :tenant_id AND status = "pending"
+            WHERE status = "pending"
         ');
-        $stmt->execute(['tenant_id' => $tenantId]);
+        $stmt->execute();
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
-    public function getPaidSummary(int $tenantId): array {
+    public function getPaidSummary(): array {
         $stmt = $this->db->prepare('
             SELECT COUNT(*) as paid_count, COALESCE(SUM(amount), 0) as paid_amount
             FROM invoices
-            WHERE tenant_id = :tenant_id AND status = "paid"
+            WHERE status = "paid"
         ');
-        $stmt->execute(['tenant_id' => $tenantId]);
+        $stmt->execute();
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 }

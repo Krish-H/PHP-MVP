@@ -26,7 +26,7 @@ class UserController {
             $name = isset($_GET['name']) ? $_GET['name'] : null;
             $email = isset($_GET['email']) ? $_GET['email'] : null;
 
-            $result = $this->userService->listUsers($tenantId, $page, $limit, $name, $email);
+            $result = $this->userService->listUsers($page, $limit, $name, $email);
 
             Response::json($result, 200);
         } catch (Exception $e) {
@@ -43,7 +43,7 @@ class UserController {
                 Response::json(['error' => 'Unauthorized'], 401);
             }
 
-            $user = $this->userService->getUser($params['id'], $tenantId);
+            $user = $this->userService->getUser($params['id']);
             unset($user['password_hash']); // Security best practice: don't return password hash
 
             Response::json(['user' => $user], 200);
@@ -66,7 +66,7 @@ class UserController {
                 Response::json(['error' => 'Invalid request body'], 400);
             }
 
-            $userId = $this->userService->createUser($data, $tenantId);
+            $userId = $this->userService->createUser($data);
 
             Response::json([
                 'message' => 'User created successfully',
@@ -91,7 +91,7 @@ class UserController {
                 Response::json(['error' => 'Invalid request body'], 400);
             }
 
-            $this->userService->updateUser($params['id'], $data, $tenantId);
+            $this->userService->updateUser($params['id'], $data);
 
             Response::json([
                 'message' => 'User updated successfully'
@@ -112,7 +112,7 @@ class UserController {
                 Response::json(['error' => 'Unauthorized'], 401);
             }
 
-            $this->userService->deleteUser($params['id'], $tenantId, $authenticatedUserId);
+            $this->userService->deleteUser($params['id'], $authenticatedUserId);
 
             Response::json([
                 'message' => 'User deleted successfully'

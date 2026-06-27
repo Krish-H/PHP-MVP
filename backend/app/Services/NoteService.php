@@ -31,8 +31,8 @@ class NoteService {
     // List notes for an appointment
     // ----------------------------------------------------------------
 
-    public function listNotes(int $appointmentId, int $tenantId): array {
-        $rows = $this->noteRepo->findByAppointment($appointmentId, $tenantId);
+    public function listNotes(int $appointmentId): array {
+        $rows = $this->noteRepo->findByAppointment($appointmentId);
 
         return array_map(function ($row) {
             return $this->decryptNote($row);
@@ -43,26 +43,26 @@ class NoteService {
     // Add a note
     // ----------------------------------------------------------------
 
-    public function addNote(array $data, int $appointmentId, int $tenantId, int $userId): int {
+    public function addNote(array $data, int $appointmentId, int $userId): int {
         if (empty($data['note'])) {
             throw new Exception('Field "note" is required', 422);
         }
 
         $encrypted = AES::encrypt($data['note'], $this->aesKey);
 
-        return $this->noteRepo->create($appointmentId, $tenantId, $userId, $encrypted);
+        return $this->noteRepo->create($appointmentId, $userId, $encrypted);
     }
 
     // ----------------------------------------------------------------
     // Edit a note (owner only)
     // ----------------------------------------------------------------
 
-    public function editNote(int $id, array $data, int $tenantId, int $userId): void {
+    public function editNote(int $id, array $data, int $userId): void {
         if (empty($data['note'])) {
             throw new Exception('Field "note" is required', 422);
         }
 
-        $existing = $this->noteRepo->findById($id, $tenantId);
+        $existing = $this->noteRepo->findById($id);
 
         if (!$existing) {
             throw new Exception('Note not found', 404);
@@ -73,7 +73,7 @@ class NoteService {
         }
 
         $encrypted = AES::encrypt($data['note'], $this->aesKey);
-        $updated   = $this->noteRepo->update($id, $tenantId, $userId, $encrypted);
+        $updated   = $this->noteRepo->update($id, $userId, $encrypted);
 
         if (!$updated) {
             throw new Exception('Failed to update note', 500);
@@ -84,8 +84,8 @@ class NoteService {
     // Delete a note (owner only, soft delete)
     // ----------------------------------------------------------------
 
-    public function deleteNote(int $id, int $tenantId, int $userId): void {
-        $existing = $this->noteRepo->findById($id, $tenantId);
+    public function deleteNote(int $id, int $userId): void {
+        $existing = $this->noteRepo->findById($id);
 
         if (!$existing) {
             throw new Exception('Note not found', 404);
@@ -95,7 +95,7 @@ class NoteService {
             throw new Exception('You can only delete your own notes', 403);
         }
 
-        $deleted = $this->noteRepo->delete($id, $tenantId, $userId);
+        $deleted = $this->noteRepo->delete($id, $userId);
 
         if (!$deleted) {
             throw new Exception('Failed to delete note', 500);

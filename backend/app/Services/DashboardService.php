@@ -12,14 +12,10 @@ class DashboardService {
         $this->dashboardRepo = new DashboardRepository();
     }
 
-    public function getDashboardMetrics($tenantId) {
-        if (empty($tenantId)) {
-            throw new Exception('Tenant context is required', 400);
-        }
-
-        $totalPatients = $this->dashboardRepo->countPatients($tenantId);
-        $totalAppointments = $this->dashboardRepo->countAppointments($tenantId);
-        $appointmentsByStatus = $this->dashboardRepo->countAppointmentsByStatus($tenantId);
+    public function getDashboardMetrics() {
+        $totalPatients = $this->dashboardRepo->countPatients();
+        $totalAppointments = $this->dashboardRepo->countAppointments();
+        $appointmentsByStatus = $this->dashboardRepo->countAppointmentsByStatus();
 
         return [
             'total_patients' => $totalPatients,

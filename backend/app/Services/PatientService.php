@@ -20,16 +20,16 @@ class PatientService {
     // Called by PatientController@index
     // GET /api/patients
     // ----------------------------------------------------------------
-    public function listPatients($tenantId) {
-        return $this->patientRepo->findAll((int) $tenantId);
+    public function listPatients() {
+        return $this->patientRepo->findAll();
     }
 
     // ----------------------------------------------------------------
     // Called by PatientController@show
     // GET /api/patients/{id}
     // ----------------------------------------------------------------
-    public function getPatient($id, $tenantId) {
-        $patient = $this->patientRepo->findById((int) $id, (int) $tenantId);
+    public function getPatient($id) {
+        $patient = $this->patientRepo->findById((int) $id);
 
         if (!$patient) {
             throw new Exception('Patient not found', 404);
@@ -42,7 +42,7 @@ class PatientService {
     // Called by PatientController@store
     // POST /api/patients
     // ----------------------------------------------------------------
-    public function addPatient($data, $tenantId, $userId) {
+    public function addPatient($data, $userId) {
         // Validate required fields
         $required = ['name', 'dob', 'gender', 'phone', 'email'];
         foreach ($required as $field) {
@@ -53,7 +53,7 @@ class PatientService {
 
         if (!empty($data['patient_user_id'])) {
             $patientUserId = (int)$data['patient_user_id'];
-            $user = $this->userRepo->findByIdWithTenant($patientUserId, $tenantId);
+            $user = $this->userRepo->findByIdWithTenant($patientUserId);
             
             if (!$user) {
                 throw new Exception("Patient user account not found or does not belong to this tenant", 404);
@@ -61,20 +61,20 @@ class PatientService {
             if ((int)$user['role_id'] !== \App\Config\Roles::PATIENT) {
                 throw new Exception("User account must have the PATIENT role", 422);
             }
-            if ($this->patientRepo->isPatientUserLinkedToAnother($patientUserId, $tenantId)) {
+            if ($this->patientRepo->isPatientUserLinkedToAnother($patientUserId)) {
                 throw new Exception("User account is already linked to a patient record", 422);
             }
         }
 
-        return $this->patientRepo->create($data, (int) $tenantId, (int) $userId);
+        return $this->patientRepo->create($data, (int) $userId);
     }
 
     // ----------------------------------------------------------------
     // Called by PatientController@update
     // PUT /api/patients/{id}
     // ----------------------------------------------------------------
-    public function updatePatient($id, $data, $tenantId) {
-        $existing = $this->patientRepo->findById((int) $id, (int) $tenantId);
+    public function updatePatient($id, $data) {
+        $existing = $this->patientRepo->findById((int) $id);
 
         if (!$existing) {
             throw new Exception('Patient not found', 404);
@@ -82,7 +82,7 @@ class PatientService {
 
         if (array_key_exists('patient_user_id', $data) && !empty($data['patient_user_id'])) {
             $patientUserId = (int)$data['patient_user_id'];
-            $user = $this->userRepo->findByIdWithTenant($patientUserId, $tenantId);
+            $user = $this->userRepo->findByIdWithTenant($patientUserId);
             
             if (!$user) {
                 throw new Exception("Patient user account not found or does not belong to this tenant", 404);
@@ -90,12 +90,12 @@ class PatientService {
             if ((int)$user['role_id'] !== \App\Config\Roles::PATIENT) {
                 throw new Exception("User account must have the PATIENT role", 422);
             }
-            if ($this->patientRepo->isPatientUserLinkedToAnother($patientUserId, $tenantId, (int)$id)) {
+            if ($this->patientRepo->isPatientUserLinkedToAnother($patientUserId, (int)$id)) {
                 throw new Exception("User account is already linked to another patient record", 422);
             }
         }
 
-        $updated = $this->patientRepo->update((int) $id, (int) $tenantId, $data);
+        $updated = $this->patientRepo->update((int) $id, $data);
 
         if (!$updated) {
             throw new Exception('No changes were made', 422);
@@ -108,14 +108,14 @@ class PatientService {
     // Called by PatientController@destroy
     // DELETE /api/patients/{id}
     // ----------------------------------------------------------------
-    public function deletePatient($id, $tenantId) {
-        $existing = $this->patientRepo->findById((int) $id, (int) $tenantId);
+    public function deletePatient($id) {
+        $existing = $this->patientRepo->findById((int) $id);
 
         if (!$existing) {
             throw new Exception('Patient not found', 404);
         }
 
-        $deleted = $this->patientRepo->delete((int) $id, (int) $tenantId);
+        $deleted = $this->patientRepo->delete((int) $id);
 
         if (!$deleted) {
             throw new Exception('Patient could not be deleted', 500);

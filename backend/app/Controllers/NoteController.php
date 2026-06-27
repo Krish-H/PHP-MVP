@@ -21,8 +21,7 @@ class NoteController {
     public function index($params) {
         try {
             $notes = $this->noteService->listNotes(
-                (int) $params['id'],
-                (int) $_SESSION['current_tenant_id']
+                (int) $params['id']
             );
             Response::json(['notes' => $notes, 'count' => count($notes)], 200);
         } catch (Exception $e) {
@@ -45,7 +44,6 @@ class NoteController {
             $noteId = $this->noteService->addNote(
                 $data,
                 (int) $params['id'],
-                (int) $_SESSION['current_tenant_id'],
                 (int) $_SESSION['current_user_id']
             );
             Response::json(['message' => 'Note added', 'note_id' => $noteId], 201);
@@ -69,7 +67,6 @@ class NoteController {
             $this->noteService->editNote(
                 (int) $params['id'],
                 $data,
-                (int) $_SESSION['current_tenant_id'],
                 (int) $_SESSION['current_user_id']
             );
             Response::json(['message' => 'Note updated'], 200);
@@ -85,7 +82,6 @@ class NoteController {
         try {
             $this->noteService->deleteNote(
                 (int) $params['id'],
-                (int) $_SESSION['current_tenant_id'],
                 (int) $_SESSION['current_user_id']
             );
             Response::json(['message' => 'Note deleted'], 200);

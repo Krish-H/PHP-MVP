@@ -23,31 +23,30 @@ class UserRepository {
         return $stmt->fetch();
     }
 
-    public function create($email, $passwordHash, $roleId, $tenantId, $isActive = 1, $name = null) {
+    public function create($email, $passwordHash, $roleId, $isActive = 1, $name = null) {
         $stmt = $this->db->prepare('
-            INSERT INTO users (email, password_hash, role_id, tenant_id, is_active, name) 
-            VALUES (:email, :password_hash, :role_id, :tenant_id, :is_active, :name)
+            INSERT INTO users (email, password_hash, role_id, is_active, name) 
+            VALUES (:email, :password_hash, :role_id, :is_active, :name)
         ');
         $stmt->execute([
             'email' => $email,
             'password_hash' => $passwordHash,
             'role_id' => $roleId,
-            'tenant_id' => $tenantId,
             'is_active' => $isActive,
             'name' => $name
         ]);
         return $this->db->lastInsertId();
     }
 
-    public function listStaff($tenantId) {
-        $stmt = $this->db->prepare('SELECT u.id, u.email, u.role_id, u.is_active, r.name AS role_name, u.created_at FROM users u JOIN roles r ON u.role_id = r.id WHERE u.tenant_id = :tenant_id AND u.deleted_at IS NULL ORDER BY u.created_at DESC');
-        $stmt->execute(['tenant_id' => $tenantId]);
+    public function listStaff() {
+        $stmt = $this->db->prepare('SELECT u.id, u.email, u.role_id, u.is_active, r.name AS role_name, u.created_at FROM users u JOIN roles r ON u.role_id = r.id WHERE u.deleted_at IS NULL ORDER BY u.created_at DESC');
+        $stmt->execute();
         return $stmt->fetchAll();
     }
 
-    public function update($id, $tenantId, $data) {
+    public function update($id, $data) {
         $fields = [];
-        $params = ['id' => $id, 'tenant_id' => $tenantId];
+        $params = ['id' => $id];
 
         if (isset($data['name'])) {
             $fields[] = 'name = :name';
@@ -74,24 +73,24 @@ class UserRepository {
             return false;
         }
 
-        $sql = 'UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = :id AND tenant_id = :tenant_id AND deleted_at IS NULL';
+        $sql = 'UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = :id AND deleted_at IS NULL';
         $stmt = $this->db->prepare($sql);
         return $stmt->execute($params);
     }
 
-    public function toggleActive($id, $tenantId, $status) {
-        $stmt = $this->db->prepare('UPDATE users SET is_active = :status WHERE id = :id AND tenant_id = :tenant_id AND deleted_at IS NULL');
-        return $stmt->execute(['status' => $status, 'id' => $id, 'tenant_id' => $tenantId]);
+    public function toggleActive($id, $status) {
+        $stmt = $this->db->prepare('UPDATE users SET is_active = :status WHERE id = :id AND deleted_at IS NULL');
+        return $stmt->execute(['status' => $status, 'id' => $id]);
     }
 
-    public function findByIdWithTenant($id, $tenantId) {
+    public function findByIdWithTenant($id) {
         $stmt = $this->db->prepare('
-            SELECT id, tenant_id, name, email, role_id, created_at, updated_at 
+            SELECT id, name, email, role_id, created_at, updated_at 
             FROM users 
-            WHERE id = :id AND tenant_id = :tenant_id AND deleted_at IS NULL 
+            WHERE id = :id AND deleted_at IS NULL 
             LIMIT 1
         ');
-        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+        $stmt->execute(['id' => $id]);
         return $stmt->fetch();
     }
 
@@ -107,21 +106,20 @@ class UserRepository {
         return (int)$stmt->fetchColumn() > 0;
     }
 
-    public function softDelete($id, $tenantId) {
+    public function softDelete($id) {
         $stmt = $this->db->prepare('
             UPDATE users 
             SET deleted_at = CURRENT_TIMESTAMP, is_active = 0 
-            WHERE id = :id AND tenant_id = :tenant_id AND deleted_at IS NULL
+            WHERE id = :id AND deleted_at IS NULL
         ');
         return $stmt->execute([
-            'id' => $id,
-            'tenant_id' => $tenantId
+            'id' => $id
         ]);
     }
 
-    public function getUsers($tenantId, $page = 1, $limit = 10, $name = null, $email = null) {
-        $where = ['tenant_id = :tenant_id', 'deleted_at IS NULL'];
-        $params = ['tenant_id' => $tenantId];
+    public function getUsers($page = 1, $limit = 10, $name = null, $email = null) {
+        $where = ['deleted_at IS NULL'];
+        $params = [];
 
         if ($name !== null && trim($name) !== '') {
             $where[] = 'name LIKE :name';
@@ -141,7 +139,7 @@ class UserRepository {
         $total = (int)$countStmt->fetchColumn();
 
         $offset = ($page - 1) * $limit;
-        $sql = "SELECT id, tenant_id, name, email, role_id, created_at, updated_at 
+        $sql = "SELECT id, name, email, role_id, created_at, updated_at 
                 FROM users 
                 WHERE $whereSql 
                 ORDER BY created_at DESC 

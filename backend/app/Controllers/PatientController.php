@@ -16,8 +16,7 @@ class PatientController {
     }
 
     public function index() {
-        $tenantId = $_SESSION['current_tenant_id'] ?? null;
-        $patients = $this->patientService->listPatients($tenantId);
+        $patients = $this->patientService->listPatients();
         Response::json(['patients' => $patients], 200);
     }
 
@@ -29,7 +28,7 @@ class PatientController {
         }
 
         try {
-            $patientId = $this->patientService->addPatient($data, $_SESSION['current_tenant_id'], $_SESSION['current_user_id']);
+            $patientId = $this->patientService->addPatient($data, $_SESSION['current_user_id']);
             Response::json(['message' => 'Patient added successfully', 'patient_id' => $patientId], 201);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
@@ -38,7 +37,7 @@ class PatientController {
 
     public function show($params) {
         try {
-            $patient = $this->patientService->getPatient($params['id'], $_SESSION['current_tenant_id']);
+            $patient = $this->patientService->getPatient($params['id']);
             Response::json(['patient' => $patient], 200);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
@@ -53,7 +52,7 @@ class PatientController {
         }
 
         try {
-            $this->patientService->updatePatient($params['id'], $data, $_SESSION['current_tenant_id']);
+            $this->patientService->updatePatient($params['id'], $data);
             Response::json(['message' => 'Patient updated successfully'], 200);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
@@ -62,7 +61,7 @@ class PatientController {
 
     public function destroy($params) {
         try {
-            $this->patientService->deletePatient($params['id'], $_SESSION['current_tenant_id']);
+            $this->patientService->deletePatient($params['id']);
             Response::json(['message' => 'Patient deleted successfully'], 200);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);

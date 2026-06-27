@@ -33,21 +33,19 @@ class CalendarRepository {
      * @param  int|null    $providerId  null = all providers
      * @return array
      */
-    public function fetchByDate(int $tenantId, string $date, ?int $providerId = null): array {
+    public function fetchByDate(string $date, ?int $providerId = null): array {
         if ($providerId !== null) {
             $stmt = $this->db->prepare(
                 'SELECT id, patient_id, provider_id,
                         appointment_date, appointment_time,
                         status, notes, is_cancelled
                  FROM   appointments
-                 WHERE  tenant_id        = :tenant_id
-                   AND  appointment_date = :date
+                 WHERE  appointment_date = :date
                    AND  provider_id      = :provider_id
                    AND  is_cancelled     = 0
                  ORDER BY appointment_time ASC'
             );
             $stmt->execute([
-                'tenant_id'   => $tenantId,
                 'date'        => $date,
                 'provider_id' => $providerId,
             ]);
@@ -57,13 +55,11 @@ class CalendarRepository {
                         appointment_date, appointment_time,
                         status, notes, is_cancelled
                  FROM   appointments
-                 WHERE  tenant_id        = :tenant_id
-                   AND  appointment_date = :date
+                 WHERE  appointment_date = :date
                    AND  is_cancelled     = 0
                  ORDER BY appointment_time ASC'
             );
             $stmt->execute([
-                'tenant_id' => $tenantId,
                 'date'      => $date,
             ]);
         }
@@ -85,21 +81,19 @@ class CalendarRepository {
      * @param  int|null $providerId
      * @return array
      */
-    public function fetchByRange(int $tenantId, string $startDate, string $endDate, ?int $providerId = null): array {
+    public function fetchByRange(string $startDate, string $endDate, ?int $providerId = null): array {
         if ($providerId !== null) {
             $stmt = $this->db->prepare(
                 'SELECT id, patient_id, provider_id,
                         appointment_date, appointment_time,
                         status, notes, is_cancelled
                  FROM   appointments
-                 WHERE  tenant_id        = :tenant_id
-                   AND  appointment_date BETWEEN :start_date AND :end_date
+                 WHERE  appointment_date BETWEEN :start_date AND :end_date
                    AND  provider_id      = :provider_id
                    AND  is_cancelled     = 0
                  ORDER BY appointment_date ASC, appointment_time ASC'
             );
             $stmt->execute([
-                'tenant_id'   => $tenantId,
                 'start_date'  => $startDate,
                 'end_date'    => $endDate,
                 'provider_id' => $providerId,
@@ -110,13 +104,11 @@ class CalendarRepository {
                         appointment_date, appointment_time,
                         status, notes, is_cancelled
                  FROM   appointments
-                 WHERE  tenant_id        = :tenant_id
-                   AND  appointment_date BETWEEN :start_date AND :end_date
+                 WHERE  appointment_date BETWEEN :start_date AND :end_date
                    AND  is_cancelled     = 0
                  ORDER BY appointment_date ASC, appointment_time ASC'
             );
             $stmt->execute([
-                'tenant_id'  => $tenantId,
                 'start_date' => $startDate,
                 'end_date'   => $endDate,
             ]);
@@ -137,7 +129,7 @@ class CalendarRepository {
      * @param  int $tenantId
      * @return array|null
      */
-    public function fetchTooltip(int $id, int $tenantId): ?array {
+    public function fetchTooltip(int $id): ?array {
         $stmt = $this->db->prepare(
             'SELECT a.id, a.patient_id, a.provider_id,
                     a.appointment_date, a.appointment_time,
@@ -148,10 +140,9 @@ class CalendarRepository {
              LEFT JOIN patients p
                     ON p.id = a.patient_id AND p.is_deleted = 0
              WHERE  a.id        = :id
-               AND  a.tenant_id = :tenant_id
              LIMIT 1'
         );
-        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+        $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
 
         return $row ?: null;

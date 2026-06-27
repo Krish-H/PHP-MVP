@@ -28,58 +28,52 @@ class AppointmentRepository {
     // READ
     // ----------------------------------------------------------------
 
-    public function findAll(int $tenantId): array {
+    public function findAll(): array {
         $stmt = $this->db->prepare(
             'SELECT * FROM appointments
-             WHERE tenant_id    = :tenant_id
-               AND is_cancelled = 0
+             WHERE is_cancelled = 0
              ORDER BY appointment_date ASC, appointment_time ASC'
         );
-        $stmt->execute(['tenant_id' => $tenantId]);
+        $stmt->execute();
 
         return $stmt->fetchAll();
     }
 
-    public function findByProvider(int $tenantId, int $providerId): array {
+    public function findByProvider(int $providerId): array {
         $stmt = $this->db->prepare(
             'SELECT * FROM appointments
-             WHERE tenant_id    = :tenant_id
-               AND provider_id  = :provider_id
+             WHERE provider_id  = :provider_id
                AND is_cancelled = 0
              ORDER BY appointment_date ASC, appointment_time ASC'
         );
         $stmt->execute([
-            'tenant_id'   => $tenantId,
             'provider_id' => $providerId,
         ]);
 
         return $stmt->fetchAll();
     }
 
-    public function findByPatient(int $tenantId, int $patientId): array {
+    public function findByPatient(int $patientId): array {
         $stmt = $this->db->prepare(
             'SELECT * FROM appointments
-             WHERE tenant_id    = :tenant_id
-               AND patient_id   = :patient_id
+             WHERE patient_id   = :patient_id
                AND is_cancelled = 0
              ORDER BY appointment_date ASC, appointment_time ASC'
         );
         $stmt->execute([
-            'tenant_id'  => $tenantId,
             'patient_id' => $patientId,
         ]);
 
         return $stmt->fetchAll();
     }
 
-    public function findById(int $id, int $tenantId): ?array {
+    public function findById(int $id): ?array {
         $stmt = $this->db->prepare(
             'SELECT * FROM appointments
              WHERE id        = :id
-               AND tenant_id = :tenant_id
              LIMIT 1'
         );
-        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+        $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
 
         return $row ?: null;
@@ -129,18 +123,17 @@ class AppointmentRepository {
     // WRITE
     // ----------------------------------------------------------------
 
-    public function create(array $data, int $tenantId): int {
+    public function create(array $data): int {
         $stmt = $this->db->prepare(
             'INSERT INTO appointments
-             (tenant_id, patient_id, provider_id, appointment_date, appointment_time,
+             (patient_id, provider_id, appointment_date, appointment_time,
               notes, status, is_cancelled, created_at, updated_at)
              VALUES
-             (:tenant_id, :patient_id, :provider_id, :appointment_date, :appointment_time,
+             (:patient_id, :provider_id, :appointment_date, :appointment_time,
               :notes, "scheduled", 0, NOW(), NOW())'
         );
 
         $stmt->execute([
-            'tenant_id'        => $tenantId,
             'patient_id'       => (int) $data['patient_id'],
             'provider_id'      => (int) $data['provider_id'],
             'appointment_date' => $data['appointment_date'],
@@ -159,10 +152,10 @@ class AppointmentRepository {
      * @param  array $data   Subset of: appointment_date, appointment_time, reason, status
      * @return bool  true if a row was updated
      */
-    public function update(int $id, int $tenantId, array $data): bool {
+    public function update(int $id, array $data): bool {
         $allowed    = ['appointment_date', 'appointment_time', 'notes', 'status'];
         $setClauses = [];
-        $params     = ['id' => $id, 'tenant_id' => $tenantId];
+        $params     = ['id' => $id];
 
         foreach ($data as $field => $value) {
             if (in_array($field, $allowed, true)) {
@@ -177,7 +170,7 @@ class AppointmentRepository {
 
         $setClauses[] = 'updated_at = NOW()';
         $sql = 'UPDATE appointments SET ' . implode(', ', $setClauses) .
-               ' WHERE id = :id AND tenant_id = :tenant_id AND is_cancelled = 0';
+               ' WHERE id = :id AND is_cancelled = 0';
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -188,17 +181,16 @@ class AppointmentRepository {
     /**
      * Cancel an appointment (sets is_cancelled = 1, status = "cancelled").
      */
-    public function cancel(int $id, int $tenantId): bool {
+    public function cancel(int $id): bool {
         $stmt = $this->db->prepare(
             'UPDATE appointments
              SET is_cancelled = 1,
                  status       = "cancelled",
                  updated_at   = NOW()
              WHERE id         = :id
-               AND tenant_id  = :tenant_id
                AND is_cancelled = 0'
         );
-        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+        $stmt->execute(['id' => $id]);
 
         return $stmt->rowCount() > 0;
     }

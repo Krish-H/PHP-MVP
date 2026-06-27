@@ -23,7 +23,7 @@ class AppointmentService {
     // Public API
     // ----------------------------------------------------------------
 
-    public function createAppointment(array $data, int $tenantId): int {
+    public function createAppointment(array $data): int {
         $this->validateRequired($data, ['patient_id', 'provider_id', 'appointment_date', 'appointment_time']);
         $this->validateDateTimeFormat($data['appointment_date'], $data['appointment_time']);
 
@@ -35,11 +35,11 @@ class AppointmentService {
             throw new Exception('Provider already has an appointment at this date and time', 409);
         }
 
-        return $this->appointmentRepo->create($data, $tenantId);
+        return $this->appointmentRepo->create($data);
     }
 
-    public function getAppointment(int $id, int $tenantId): array {
-        $appointment = $this->appointmentRepo->findById($id, $tenantId);
+    public function getAppointment(int $id): array {
+        $appointment = $this->appointmentRepo->findById($id);
 
         if (!$appointment) {
             throw new Exception('Appointment not found', 404);
@@ -48,12 +48,12 @@ class AppointmentService {
         return $appointment;
     }
 
-    public function listAppointments(int $tenantId): array {
-        return $this->appointmentRepo->findAll($tenantId);
+    public function listAppointments(): array {
+        return $this->appointmentRepo->findAll();
     }
 
-    public function updateAppointment(int $id, array $data, int $tenantId): void {
-        $existing = $this->appointmentRepo->findById($id, $tenantId);
+    public function updateAppointment(int $id, array $data): void {
+        $existing = $this->appointmentRepo->findById($id);
 
         if (!$existing) {
             throw new Exception('Appointment not found', 404);
@@ -85,15 +85,15 @@ class AppointmentService {
             }
         }
 
-        $updated = $this->appointmentRepo->update($id, $tenantId, $data);
+        $updated = $this->appointmentRepo->update($id, $data);
 
         if (!$updated) {
             throw new Exception('No changes were made', 400);
         }
     }
 
-    public function cancelAppointment(int $id, int $tenantId): void {
-        $existing = $this->appointmentRepo->findById($id, $tenantId);
+    public function cancelAppointment(int $id): void {
+        $existing = $this->appointmentRepo->findById($id);
 
         if (!$existing) {
             throw new Exception('Appointment not found', 404);
@@ -107,7 +107,7 @@ class AppointmentService {
             throw new Exception('Cannot cancel a completed appointment', 400);
         }
 
-        $cancelled = $this->appointmentRepo->cancel($id, $tenantId);
+        $cancelled = $this->appointmentRepo->cancel($id);
 
         if (!$cancelled) {
             throw new Exception('Failed to cancel appointment', 500);

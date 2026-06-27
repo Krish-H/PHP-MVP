@@ -30,14 +30,13 @@ class PatientRepository {
     // READ
     // ----------------------------------------------------------------
 
-    public function findAll(int $tenantId): array {
+    public function findAll(): array {
         $stmt = $this->db->prepare(
             'SELECT * FROM patients
-             WHERE tenant_id  = :tenant_id
-               AND is_deleted = 0
+             WHERE is_deleted = 0
              ORDER BY created_at DESC'
         );
-        $stmt->execute(['tenant_id' => $tenantId]);
+        $stmt->execute();
         $patients = $stmt->fetchAll();
 
         return array_map(function ($patient) {
@@ -45,15 +44,14 @@ class PatientRepository {
         }, $patients);
     }
 
-    public function findById(int $id, int $tenantId): ?array {
+    public function findById(int $id): ?array {
         $stmt = $this->db->prepare(
             'SELECT * FROM patients
              WHERE id         = :id
-               AND tenant_id  = :tenant_id
                AND is_deleted = 0
              LIMIT 1'
         );
-        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+        $stmt->execute(['id' => $id]);
         $patient = $stmt->fetch();
 
         if (!$patient) {
@@ -63,15 +61,14 @@ class PatientRepository {
         return $this->decryptPhi($patient);
     }
 
-    public function findByUserId(int $userId, int $tenantId): ?array {
+    public function findByUserId(int $userId): ?array {
         $stmt = $this->db->prepare(
             'SELECT * FROM patients
              WHERE user_id    = :user_id
-               AND tenant_id  = :tenant_id
                AND is_deleted = 0
              LIMIT 1'
         );
-        $stmt->execute(['user_id' => $userId, 'tenant_id' => $tenantId]);
+        $stmt->execute(['user_id' => $userId]);
         $patient = $stmt->fetch();
 
         if (!$patient) {
@@ -81,15 +78,14 @@ class PatientRepository {
         return $this->decryptPhi($patient);
     }
 
-    public function findByPatientUserId(int $userId, int $tenantId): ?array {
+    public function findByPatientUserId(int $userId): ?array {
         $stmt = $this->db->prepare(
             'SELECT * FROM patients
              WHERE patient_user_id = :patient_user_id
-               AND tenant_id  = :tenant_id
                AND is_deleted = 0
              LIMIT 1'
         );
-        $stmt->execute(['patient_user_id' => $userId, 'tenant_id' => $tenantId]);
+        $stmt->execute(['patient_user_id' => $userId]);
         $patient = $stmt->fetch();
 
         if (!$patient) {
@@ -99,12 +95,11 @@ class PatientRepository {
         return $this->decryptPhi($patient);
     }
 
-    public function isPatientUserLinkedToAnother(int $patientUserId, int $tenantId, ?int $excludePatientId = null): bool {
+    public function isPatientUserLinkedToAnother(int $patientUserId, ?int $excludePatientId = null): bool {
         $sql = 'SELECT COUNT(*) FROM patients
                 WHERE patient_user_id = :patient_user_id
-                  AND tenant_id = :tenant_id
                   AND is_deleted = 0';
-        $params = ['patient_user_id' => $patientUserId, 'tenant_id' => $tenantId];
+        $params = ['patient_user_id' => $patientUserId];
 
         if ($excludePatientId !== null) {
             $sql .= ' AND id != :exclude_id';
@@ -121,20 +116,19 @@ class PatientRepository {
     // WRITE
     // ----------------------------------------------------------------
 
-    public function create(array $data, int $tenantId, int $userId): int {
+    public function create(array $data, int $userId): int {
         $stmt = $this->db->prepare(
             'INSERT INTO patients
-             (tenant_id, user_id, patient_user_id, name, dob, gender, phone, email,
+             (user_id, patient_user_id, name, dob, gender, phone, email,
               address, blood_group, medical_history, emergency_contact,
               created_at, updated_at)
              VALUES
-             (:tenant_id, :user_id, :patient_user_id, :name, :dob, :gender, :phone, :email,
+             (:user_id, :patient_user_id, :name, :dob, :gender, :phone, :email,
               :address, :blood_group, :medical_history, :emergency_contact,
               NOW(), NOW())'
         );
 
         $stmt->execute([
-            'tenant_id'         => $tenantId,
             'user_id'           => $userId,
             'patient_user_id'   => !empty($data['patient_user_id']) ? (int) $data['patient_user_id'] : null,
             'name'              => AES::encrypt($data['name'],   $this->key),
@@ -151,9 +145,9 @@ class PatientRepository {
         return (int) $this->db->lastInsertId();
     }
 
-    public function update(int $id, int $tenantId, array $data): bool {
+    public function update(int $id, array $data): bool {
         $setClauses = [];
-        $params     = ['id' => $id, 'tenant_id' => $tenantId];
+        $params     = ['id' => $id];
 
         $phiFields = ['name', 'dob', 'gender', 'phone', 'email',
                       'address', 'blood_group', 'medical_history', 'emergency_contact'];
@@ -177,7 +171,7 @@ class PatientRepository {
 
         $setClauses[] = 'updated_at = NOW()';
         $sql = 'UPDATE patients SET ' . implode(', ', $setClauses) .
-               ' WHERE id = :id AND tenant_id = :tenant_id AND is_deleted = 0';
+               ' WHERE id = :id AND is_deleted = 0';
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -188,13 +182,13 @@ class PatientRepository {
     /**
      * Soft-delete: sets is_deleted = 1 and records deleted_at timestamp.
      */
-    public function delete(int $id, int $tenantId): bool {
+    public function delete(int $id): bool {
         $stmt = $this->db->prepare(
             'UPDATE patients
              SET is_deleted = 1, deleted_at = NOW()
-             WHERE id = :id AND tenant_id = :tenant_id AND is_deleted = 0'
+             WHERE id = :id AND is_deleted = 0'
         );
-        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+        $stmt->execute(['id' => $id]);
 
         return $stmt->rowCount() > 0;
     }

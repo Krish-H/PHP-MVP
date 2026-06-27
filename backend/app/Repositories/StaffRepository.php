@@ -19,10 +19,9 @@ class StaffRepository {
         $this->db = Database::getConnection();
     }
 
-    public function createStaff($tenantId, $name, $email, $passwordHash, $roleId, $isActive = 1) {
-        $stmt = $this->db->prepare('INSERT INTO users (tenant_id, name, email, password_hash, role_id, is_active) VALUES (:tenant_id, :name, :email, :password_hash, :role_id, :is_active)');
+    public function createStaff($name, $email, $passwordHash, $roleId, $isActive = 1) {
+        $stmt = $this->db->prepare('INSERT INTO users (name, email, password_hash, role_id, is_active) VALUES (:name, :email, :password_hash, :role_id, :is_active)');
         $stmt->execute([
-            'tenant_id' => $tenantId,
             'name' => $name,
             'email' => $email,
             'password_hash' => $passwordHash,
@@ -33,13 +32,13 @@ class StaffRepository {
         return $this->db->lastInsertId();
     }
 
-    public function getStaffList($tenantId, $page = 1, $limit = 20, $roleId = null) {
+    public function getStaffList($page = 1, $limit = 20, $roleId = null) {
         $page = max(1, (int)$page);
         $limit = max(1, (int)$limit);
         $offset = ($page - 1) * $limit;
 
-        $where = ['u.tenant_id = :tenant_id', 'u.deleted_at IS NULL'];
-        $params = ['tenant_id' => $tenantId];
+        $where = ['u.deleted_at IS NULL'];
+        $params = [];
 
         $rolesStr = implode(',', self::STAFF_ROLES);
         $where[] = "u.role_id IN ($rolesStr)";
@@ -82,16 +81,16 @@ class StaffRepository {
         ];
     }
 
-    public function getStaffById($id, $tenantId) {
+    public function getStaffById($id) {
         $rolesStr = implode(',', self::STAFF_ROLES);
-        $stmt = $this->db->prepare("SELECT u.id, u.name, u.email, u.role_id, r.name AS role_name, u.is_active, u.created_at, u.updated_at FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = :id AND u.tenant_id = :tenant_id AND u.deleted_at IS NULL AND u.role_id IN ($rolesStr) LIMIT 1");
-        $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+        $stmt = $this->db->prepare("SELECT u.id, u.name, u.email, u.role_id, r.name AS role_name, u.is_active, u.created_at, u.updated_at FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = :id AND u.deleted_at IS NULL AND u.role_id IN ($rolesStr) LIMIT 1");
+        $stmt->execute(['id' => $id]);
         return $stmt->fetch();
     }
 
-    public function updateStaff($id, $tenantId, $data) {
+    public function updateStaff($id, $data) {
         $fields = [];
-        $params = ['id' => $id, 'tenant_id' => $tenantId];
+        $params = ['id' => $id];
 
         if (isset($data['name'])) {
             $fields[] = 'name = :name';
@@ -117,19 +116,19 @@ class StaffRepository {
             return false;
         }
 
-        $sql = 'UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = :id AND tenant_id = :tenant_id AND deleted_at IS NULL';
+        $sql = 'UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = :id AND deleted_at IS NULL';
         $stmt = $this->db->prepare($sql);
         return $stmt->execute($params);
     }
 
-    public function updateStaffStatus($id, $tenantId, $status) {
-        $stmt = $this->db->prepare('UPDATE users SET is_active = :status WHERE id = :id AND tenant_id = :tenant_id AND deleted_at IS NULL');
-        return $stmt->execute(['status' => $status, 'id' => $id, 'tenant_id' => $tenantId]);
+    public function updateStaffStatus($id, $status) {
+        $stmt = $this->db->prepare('UPDATE users SET is_active = :status WHERE id = :id AND deleted_at IS NULL');
+        return $stmt->execute(['status' => $status, 'id' => $id]);
     }
 
-    public function softDeleteStaff($id, $tenantId) {
-        $stmt = $this->db->prepare('UPDATE users SET deleted_at = CURRENT_TIMESTAMP, is_active = 0 WHERE id = :id AND tenant_id = :tenant_id AND deleted_at IS NULL');
-        return $stmt->execute(['id' => $id, 'tenant_id' => $tenantId]);
+    public function softDeleteStaff($id) {
+        $stmt = $this->db->prepare('UPDATE users SET deleted_at = CURRENT_TIMESTAMP, is_active = 0 WHERE id = :id AND deleted_at IS NULL');
+        return $stmt->execute(['id' => $id]);
     }
 
     public function validateRole($roleId) {
@@ -144,9 +143,9 @@ class StaffRepository {
         return in_array($roleId, self::STAFF_ROLES, true);
     }
 
-    public function emailExists($email, $tenantId, $excludeId = null) {
-        $sql = 'SELECT COUNT(*) FROM users WHERE email = :email AND tenant_id = :tenant_id AND deleted_at IS NULL';
-        $params = ['email' => $email, 'tenant_id' => $tenantId];
+    public function emailExists($email, $excludeId = null) {
+        $sql = 'SELECT COUNT(*) FROM users WHERE email = :email AND deleted_at IS NULL';
+        $params = ['email' => $email];
 
         if ($excludeId !== null) {
             $sql .= ' AND id != :exclude_id';

@@ -15,7 +15,7 @@ class AppointmentController {
     }
 
     public function index() {
-        $appointments = $this->appointmentService->listAppointments($_SESSION['current_tenant_id']);
+        $appointments = $this->appointmentService->listAppointments();
         Response::json(['appointments' => $appointments], 200);
     }
 
@@ -27,7 +27,7 @@ class AppointmentController {
         }
 
         try {
-            $appointmentId = $this->appointmentService->createAppointment($data, $_SESSION['current_tenant_id']);
+            $appointmentId = $this->appointmentService->createAppointment($data);
             Response::json(['message' => 'Appointment created', 'appointment_id' => $appointmentId], 201);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
@@ -36,7 +36,7 @@ class AppointmentController {
 
     public function show($params) {
         try {
-            $appointment = $this->appointmentService->getAppointment($params['id'], $_SESSION['current_tenant_id']);
+            $appointment = $this->appointmentService->getAppointment($params['id']);
             Response::json(['appointment' => $appointment], 200);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
@@ -51,7 +51,7 @@ class AppointmentController {
         }
 
         try {
-            $this->appointmentService->updateAppointment($params['id'], $data, $_SESSION['current_tenant_id']);
+            $this->appointmentService->updateAppointment($params['id'], $data);
             Response::json(['message' => 'Appointment updated'], 200);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
@@ -60,7 +60,7 @@ class AppointmentController {
 
     public function destroy($params) {
         try {
-            $this->appointmentService->cancelAppointment($params['id'], $_SESSION['current_tenant_id']);
+            $this->appointmentService->cancelAppointment($params['id']);
             Response::json(['message' => 'Appointment cancelled'], 200);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);

@@ -41,13 +41,13 @@ class PrescriptionService {
      * @param int $tenantId
      * @return int          Prescription ID
      */
-    public function createPrescription(array $data, int $tenantId): int {
+    public function createPrescription(array $data): int {
         $this->validateRequired($data, ['patient_id', 'provider_id', 'items']);
-        $this->validatePatientExists($data['patient_id'], $tenantId);
-        $this->validateProviderExists($data['provider_id'], $tenantId);
+        $this->validatePatientExists($data['patient_id']);
+        $this->validateProviderExists($data['provider_id']);
         $this->validateItems($data['items']);
 
-        $prescriptionId = $this->prescriptionRepo->create($data, $tenantId);
+        $prescriptionId = $this->prescriptionRepo->create($data);
 
         // Add items
         foreach ($data['items'] as $item) {
@@ -60,8 +60,8 @@ class PrescriptionService {
     /**
      * Get a single prescription with all items.
      */
-    public function getPrescription(int $id, int $tenantId): array {
-        $prescription = $this->prescriptionRepo->getWithItems($id, $tenantId);
+    public function getPrescription(int $id): array {
+        $prescription = $this->prescriptionRepo->getWithItems($id);
 
         if (!$prescription) {
             throw new Exception('Prescription not found', 404);
@@ -74,28 +74,28 @@ class PrescriptionService {
      * List prescriptions for a tenant.
      * Optionally filter by patient_id, provider_id, or status.
      */
-    public function listPrescriptions(int $tenantId, ?int $patientId = null, ?int $providerId = null, ?string $status = null): array {
+    public function listPrescriptions(?int $patientId = null, ?int $providerId = null, ?string $status = null): array {
         // Validate filters if provided
         if ($patientId !== null) {
-            $this->validatePatientExists($patientId, $tenantId);
+            $this->validatePatientExists($patientId);
         }
 
         if ($providerId !== null) {
-            $this->validateProviderExists($providerId, $tenantId);
+            $this->validateProviderExists($providerId);
         }
 
         if ($status !== null) {
             $this->validateStatus($status);
         }
 
-        return $this->prescriptionRepo->findAll($tenantId, $patientId, $providerId, $status);
+        return $this->prescriptionRepo->findAll($patientId, $providerId, $status);
     }
 
     /**
      * Update prescription (notes only for providers).
      */
-    public function updatePrescription(int $id, array $data, int $tenantId): void {
-        $existing = $this->prescriptionRepo->findById($id, $tenantId);
+    public function updatePrescription(int $id, array $data): void {
+        $existing = $this->prescriptionRepo->findById($id);
 
         if (!$existing) {
             throw new Exception('Prescription not found', 404);
@@ -106,7 +106,7 @@ class PrescriptionService {
             throw new Exception('No updates provided', 400);
         }
 
-        $updated = $this->prescriptionRepo->update($id, $tenantId, ['notes' => $data['notes']]);
+        $updated = $this->prescriptionRepo->update($id, ['notes' => $data['notes']]);
 
         if (!$updated) {
             throw new Exception('No changes were made', 400);
@@ -117,8 +117,8 @@ class PrescriptionService {
      * Verify a prescription (pharmacist action).
      * Changes status from CREATED -> VERIFIED.
      */
-    public function verifyPrescription(int $id, int $tenantId): void {
-        $prescription = $this->prescriptionRepo->findById($id, $tenantId);
+    public function verifyPrescription(int $id): void {
+        $prescription = $this->prescriptionRepo->findById($id);
 
         if (!$prescription) {
             throw new Exception('Prescription not found', 404);
@@ -131,7 +131,7 @@ class PrescriptionService {
             );
         }
 
-        $updated = $this->prescriptionRepo->updateStatus($id, $tenantId, 'VERIFIED');
+        $updated = $this->prescriptionRepo->updateStatus($id, 'VERIFIED');
 
         if (!$updated) {
             throw new Exception('Failed to verify prescription', 500);
@@ -142,8 +142,8 @@ class PrescriptionService {
      * Dispense a prescription (pharmacist action).
      * Changes status from VERIFIED -> DISPENSED.
      */
-    public function dispensePrescription(int $id, int $tenantId): void {
-        $prescription = $this->prescriptionRepo->findById($id, $tenantId);
+    public function dispensePrescription(int $id): void {
+        $prescription = $this->prescriptionRepo->findById($id);
 
         if (!$prescription) {
             throw new Exception('Prescription not found', 404);
@@ -156,7 +156,7 @@ class PrescriptionService {
             );
         }
 
-        $updated = $this->prescriptionRepo->updateStatus($id, $tenantId, 'DISPENSED');
+        $updated = $this->prescriptionRepo->updateStatus($id, 'DISPENSED');
 
         if (!$updated) {
             throw new Exception('Failed to dispense prescription', 500);
@@ -166,11 +166,11 @@ class PrescriptionService {
     /**
      * Update prescription status directly (admin/special operations).
      */
-    public function updatePrescriptionStatus(int $id, array $data, int $tenantId): void {
+    public function updatePrescriptionStatus(int $id, array $data): void {
         $this->validateRequired($data, ['status']);
         $this->validateStatus($data['status']);
 
-        $existing = $this->prescriptionRepo->findById($id, $tenantId);
+        $existing = $this->prescriptionRepo->findById($id);
 
         if (!$existing) {
             throw new Exception('Prescription not found', 404);
@@ -179,7 +179,7 @@ class PrescriptionService {
         // Validate status transition
         $this->validateStatusTransition($existing['status'], $data['status']);
 
-        $updated = $this->prescriptionRepo->updateStatus($id, $tenantId, $data['status']);
+        $updated = $this->prescriptionRepo->updateStatus($id, $data['status']);
 
         if (!$updated) {
             throw new Exception('Failed to update prescription status', 500);
@@ -189,8 +189,8 @@ class PrescriptionService {
     /**
      * Add item to prescription.
      */
-    public function addItem(int $prescriptionId, array $data, int $tenantId): int {
-        $prescription = $this->prescriptionRepo->findById($prescriptionId, $tenantId);
+    public function addItem(int $prescriptionId, array $data): int {
+        $prescription = $this->prescriptionRepo->findById($prescriptionId);
 
         if (!$prescription) {
             throw new Exception('Prescription not found', 404);
@@ -212,8 +212,8 @@ class PrescriptionService {
     /**
      * Update prescription item.
      */
-    public function updateItem(int $prescriptionId, int $itemId, array $data, int $tenantId): void {
-        $prescription = $this->prescriptionRepo->findById($prescriptionId, $tenantId);
+    public function updateItem(int $prescriptionId, int $itemId, array $data): void {
+        $prescription = $this->prescriptionRepo->findById($prescriptionId);
 
         if (!$prescription) {
             throw new Exception('Prescription not found', 404);
@@ -253,8 +253,8 @@ class PrescriptionService {
     /**
      * Delete prescription item.
      */
-    public function deleteItem(int $prescriptionId, int $itemId, int $tenantId): void {
-        $prescription = $this->prescriptionRepo->findById($prescriptionId, $tenantId);
+    public function deleteItem(int $prescriptionId, int $itemId): void {
+        $prescription = $this->prescriptionRepo->findById($prescriptionId);
 
         if (!$prescription) {
             throw new Exception('Prescription not found', 404);
@@ -290,14 +290,14 @@ class PrescriptionService {
         }
     }
 
-    private function validatePatientExists(int $patientId, int $tenantId): void {
-        if (!$this->prescriptionRepo->patientExists($patientId, $tenantId)) {
+    private function validatePatientExists(int $patientId): void {
+        if (!$this->prescriptionRepo->patientExists($patientId)) {
             throw new Exception('Patient not found', 404);
         }
     }
 
-    private function validateProviderExists(int $providerId, int $tenantId): void {
-        if (!$this->prescriptionRepo->providerExists($providerId, $tenantId)) {
+    private function validateProviderExists(int $providerId): void {
+        if (!$this->prescriptionRepo->providerExists($providerId)) {
             throw new Exception('Provider not found', 404);
         }
     }
