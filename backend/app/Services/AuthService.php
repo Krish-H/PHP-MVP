@@ -22,7 +22,6 @@ class AuthService {
         $email = $data['email'] ?? null;
         $password = $data['password'] ?? null;
         $roleId = Roles::PATIENT;
-        $tenantId = 1;
         $name = $data['name'] ?? null;
 
         if ($this->userRepo->findByEmail($email)) {
@@ -30,7 +29,7 @@ class AuthService {
         }
 
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $userId = $this->userRepo->create($email, $hashedPassword, $roleId, $tenantId, 1, $name);
+        $userId = $this->userRepo->create($email, $hashedPassword, $roleId, 1, $name);
 
         return [
             'user_id' => $userId

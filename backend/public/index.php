@@ -37,7 +37,7 @@ $allowedOrigins = [
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-if (in_array($origin, $allowedOrigins)) {
+if (in_array($origin, $allowedOrigins) || preg_match('/^http:\/\/[a-z0-9-]+\.lvh\.me:3000$/', $origin)) {
     header("Access-Control-Allow-Origin: $origin");
 }
 

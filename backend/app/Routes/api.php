@@ -12,6 +12,8 @@ use App\Middleware\TenantMiddleware;
 
 // SaaS routes
 $router->post('/api/tenants/register', 'TenantController@register');
+$router->put('/api/tenants/theme', 'TenantController@updateTheme', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->get('/api/tenants/theme', 'TenantController@getTheme', [TenantMiddleware::class]);
 
 // Public tenant routes
 $router->post('/api/register', 'AuthController@register', [TenantMiddleware::class]);
