@@ -44,4 +44,17 @@ class TenantRepository {
         $stmt->execute([$tenantId]);
         return $stmt->fetch();
     }
+    public function updateTheme($tenantId, $themeConfig) {
+        $pdo = $this->getMasterConnection();
+        $stmt = $pdo->prepare("
+            UPDATE tenants
+            SET theme_config = :theme
+            WHERE tenant_id = :tenant_id
+        ");
+        
+        return $stmt->execute([
+            'theme' => $themeConfig,
+            'tenant_id' => $tenantId
+        ]);
+    }
 }

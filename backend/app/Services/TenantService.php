@@ -64,7 +64,7 @@ class TenantService {
 
         return [
             'success' => true,
-            'tenant_url' => $subdomain . '.localhost',
+            'tenant_url' => 'http://' . $subdomain . '.lvh.me:3000',
             'tenant_id' => $tenantId
         ];
     }
@@ -130,5 +130,24 @@ class TenantService {
         foreach ($roles as $id => $name) {
             $stmt->execute([$id, $name]);
         }
+    }
+    public function updateTheme($tenantId, $theme) {
+        $allowedFields = ['mode', 'primaryColor', 'secondaryColor', 'fontFamily', 'borderRadius'];
+        $filteredTheme = [];
+
+        foreach ($allowedFields as $field) {
+            if (isset($theme[$field])) {
+                $filteredTheme[$field] = $theme[$field];
+            }
+        }
+
+        $themeJson = json_encode($filteredTheme);
+        
+        $this->tenantRepo->updateTheme($tenantId, $themeJson);
+
+        // Update current session to reflect changes immediately
+        $_SESSION['theme_config'] = $themeJson;
+
+        return $filteredTheme;
     }
 }

@@ -8,7 +8,7 @@ use App\Helpers\Response;
 
 class TenantMiddleware {
     public function handle() {
-        $host = $_SERVER['HTTP_HOST'] ?? '';
+        $host = $_SERVER['HTTP_HOST'] ?? ''; //Apollo.localhost:3000/api/login
         
         // Remove port if exists (e.g., localhost:3000)
         $host = preg_replace('/:\d+$/', '', $host);
@@ -35,5 +35,6 @@ class TenantMiddleware {
         // Store the tenant info for the request lifecycle
         $_SESSION['tenant_id'] = $tenant['tenant_id'];
         $_SESSION['tenant_db'] = $tenant['db_name'];
+        $_SESSION['theme_config'] = $tenant['theme_config'] ?? null;
     }
 }
