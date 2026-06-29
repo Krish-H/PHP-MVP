@@ -85,7 +85,7 @@ class UserRepository {
 
     public function findByIdWithTenant($id) {
         $stmt = $this->db->prepare('
-            SELECT id, name, email, role_id, created_at, updated_at 
+            SELECT id, name, email, role_id, is_active, created_at, updated_at 
             FROM users 
             WHERE id = :id AND deleted_at IS NULL 
             LIMIT 1
@@ -139,7 +139,7 @@ class UserRepository {
         $total = (int)$countStmt->fetchColumn();
 
         $offset = ($page - 1) * $limit;
-        $sql = "SELECT id, name, email, role_id, created_at, updated_at 
+        $sql = "SELECT id, name, email, role_id, is_active, created_at, updated_at 
                 FROM users 
                 WHERE $whereSql 
                 ORDER BY created_at DESC 
