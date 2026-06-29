@@ -25,8 +25,8 @@ $router->get('/api/csrf-token', 'AuthController@csrfToken', [TenantMiddleware::c
 $router->post('/api/logout', 'AuthController@logout', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class]);
 $router->get('/api/profile', 'AuthController@profile', [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/api/change-password', 'AuthController@changePassword', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class]);
-$router->get('/api/dashboard', 'DashboardController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
-
+// $router->get('/api/dashboard', 'DashboardController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
+$router->get('/api/dashboard', 'DashboardController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::NURSE]]]);
 // Patient management
 $router->get('/api/patients', 'PatientController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
 $router->post('/api/patients', 'PatientController@store', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
@@ -69,8 +69,9 @@ $router->patch('/api/staff/{id}/deactivate', 'DoctorController@deactivate', [Ten
 $router->delete('/api/staff/{id}', 'DoctorController@destroy', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 
 // User management
-$router->get('/api/users', 'UserController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+// $router->get('/api/users', 'UserController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->get('/api/users/{id}', 'UserController@show', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->get('/api/users', 'UserController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::NURSE]]]);
 $router->post('/api/users', 'UserController@store', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->put('/api/users/{id}', 'UserController@update', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->delete('/api/users/{id}', 'UserController@destroy', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
