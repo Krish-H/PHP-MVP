@@ -56,7 +56,7 @@ class BillingService {
             throw new Exception('Invalid status', 400);
         }
 
-        $invoice = $this->billingRepo->findById($id, $tenantId);
+        $invoice = $this->billingRepo->findById($id);
         if (!$invoice) {
             throw new Exception('Invoice not found', 404);
         }
