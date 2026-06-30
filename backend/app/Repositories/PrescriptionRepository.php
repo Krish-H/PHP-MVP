@@ -32,37 +32,48 @@ class PrescriptionRepository {
      * Optionally filter by patient_id, provider_id, or status.
      */
     public function findAll(?int $patientId = null, ?int $providerId = null, ?string $status = null): array {
-        $sql = 'SELECT * FROM prescriptions WHERE 1=1';
+        $sql = 'SELECT p.*, pat.name AS encrypted_patient_name, u.name AS provider_name 
+                FROM prescriptions p
+                LEFT JOIN patients pat ON p.patient_id = pat.id
+                LEFT JOIN users u ON p.provider_id = u.id
+                WHERE 1=1';
         $params = [];
 
         if ($patientId !== null) {
-            $sql .= ' AND patient_id = :patient_id';
+            $sql .= ' AND p.patient_id = :patient_id';
             $params['patient_id'] = $patientId;
         }
 
         if ($providerId !== null) {
-            $sql .= ' AND provider_id = :provider_id';
+            $sql .= ' AND p.provider_id = :provider_id';
             $params['provider_id'] = $providerId;
         }
 
         if ($status !== null) {
-            $sql .= ' AND status = :status';
+            $sql .= ' AND p.status = :status';
             $params['status'] = $status;
         }
 
-        $sql .= ' ORDER BY created_at DESC';
+        $sql .= ' ORDER BY p.created_at DESC';
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
         $rows = $stmt->fetchAll();
 
-        // Decrypt notes field for each prescription
+        // Decrypt notes and patient_name field for each prescription
         return array_map(function ($row) {
             if (!empty($row['notes'])) {
                 $decrypted = AES::decrypt($row['notes'], $this->key);
                 $row['notes'] = $decrypted !== false ? $decrypted : null;
             }
+            if (!empty($row['encrypted_patient_name'])) {
+                $decrypted = AES::decrypt($row['encrypted_patient_name'], $this->key);
+                $row['patient_name'] = $decrypted !== false ? $decrypted : null;
+            } else {
+                $row['patient_name'] = null;
+            }
+            unset($row['encrypted_patient_name']);
             return $row;
         }, $rows);
     }
@@ -72,8 +83,11 @@ class PrescriptionRepository {
      */
     public function findById(int $id): ?array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM prescriptions
-             WHERE id        = :id
+            'SELECT p.*, pat.name AS encrypted_patient_name, u.name AS provider_name 
+             FROM prescriptions p
+             LEFT JOIN patients pat ON p.patient_id = pat.id
+             LEFT JOIN users u ON p.provider_id = u.id
+             WHERE p.id = :id
              LIMIT 1'
         );
         $stmt->execute(['id' => $id]);
@@ -87,6 +101,14 @@ class PrescriptionRepository {
             $decrypted = AES::decrypt($row['notes'], $this->key);
             $row['notes'] = $decrypted !== false ? $decrypted : null;
         }
+        
+        if (!empty($row['encrypted_patient_name'])) {
+            $decrypted = AES::decrypt($row['encrypted_patient_name'], $this->key);
+            $row['patient_name'] = $decrypted !== false ? $decrypted : null;
+        } else {
+            $row['patient_name'] = null;
+        }
+        unset($row['encrypted_patient_name']);
 
         return $row;
     }
