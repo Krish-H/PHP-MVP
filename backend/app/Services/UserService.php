@@ -102,6 +102,24 @@ class UserService {
         return $this->userRepo->softDelete($id);
     }
 
+    public function activateUser($id) {
+        $this->ensureAdmin();
+        $this->getUser($id);
+        if (!$this->userRepo->toggleActive($id, 1)) {
+            throw new Exception('Unable to activate user', 400);
+        }
+        return true;
+    }
+
+    public function deactivateUser($id) {
+        $this->ensureAdmin();
+        $this->getUser($id);
+        if (!$this->userRepo->toggleActive($id, 0)) {
+            throw new Exception('Unable to deactivate user', 400);
+        }
+        return true;
+    }
+
     private function isValidRole($role) {
         $validRoles = [
             Roles::ADMIN,
