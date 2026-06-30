@@ -23,7 +23,7 @@ class BillingService {
     public function getMyInvoices(int $userId): array {
         $patient = $this->patientRepo->findByPatientUserId($userId);
         if (!$patient) {
-            throw new Exception('Patient mapping not found', 404);
+            return [];
         }
         return $this->billingRepo->findByPatientId($patient['id']);
     }
