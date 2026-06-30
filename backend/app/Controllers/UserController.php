@@ -123,4 +123,36 @@ class UserController {
             Response::json(['error' => $e->getMessage()], $statusCode);
         }
     }
+
+    public function activate($params) {
+        try {
+            $tenantId = $_SESSION['current_tenant_id'] ?? null;
+            if (!$tenantId) {
+                Response::json(['error' => 'Unauthorized'], 401);
+            }
+
+            $this->userService->activateUser($params['id']);
+            Response::json(['message' => 'User activated successfully'], 200);
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $statusCode = (is_numeric($code) && $code >= 100 && $code < 600) ? (int)$code : 500;
+            Response::json(['error' => $e->getMessage()], $statusCode);
+        }
+    }
+
+    public function deactivate($params) {
+        try {
+            $tenantId = $_SESSION['current_tenant_id'] ?? null;
+            if (!$tenantId) {
+                Response::json(['error' => 'Unauthorized'], 401);
+            }
+
+            $this->userService->deactivateUser($params['id']);
+            Response::json(['message' => 'User deactivated successfully'], 200);
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $statusCode = (is_numeric($code) && $code >= 100 && $code < 600) ? (int)$code : 500;
+            Response::json(['error' => $e->getMessage()], $statusCode);
+        }
+    }
 }

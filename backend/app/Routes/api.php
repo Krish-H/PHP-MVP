@@ -73,6 +73,8 @@ $router->get('/api/users', 'UserController@index', [TenantMiddleware::class, Aut
 $router->get('/api/users/{id}', 'UserController@show', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->post('/api/users', 'UserController@store', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->put('/api/users/{id}', 'UserController@update', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->patch('/api/users/{id}/activate', 'UserController@activate', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->patch('/api/users/{id}/deactivate', 'UserController@deactivate', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->delete('/api/users/{id}', 'UserController@destroy', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 
 // Prescription management
