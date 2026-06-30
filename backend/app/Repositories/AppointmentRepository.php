@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\Config\Database;
+use App\Config\Env;
+use App\Security\AES;
 
 /**
  * AppointmentRepository
@@ -19,9 +21,22 @@ use App\Config\Database;
 class AppointmentRepository {
 
     private $db;
+    private $key;
 
     public function __construct() {
         $this->db = Database::getConnection();
+        $this->key = Env::get('AES_KEY');
+    }
+
+    private function decryptPatientName($row) {
+        if (!empty($row['encrypted_patient_name'])) {
+            $decrypted = AES::decrypt($row['encrypted_patient_name'], $this->key);
+            $row['patient_name'] = $decrypted !== false ? $decrypted : null;
+        } else {
+            $row['patient_name'] = null;
+        }
+        unset($row['encrypted_patient_name']);
+        return $row;
     }
 
     // ----------------------------------------------------------------
@@ -30,53 +45,68 @@ class AppointmentRepository {
 
     public function findAll(): array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM appointments
-             WHERE is_cancelled = 0
-             ORDER BY appointment_date ASC, appointment_time ASC'
+            'SELECT a.*, p.name AS encrypted_patient_name, u.name AS provider_name 
+             FROM appointments a
+             LEFT JOIN patients p ON a.patient_id = p.id
+             LEFT JOIN users u ON a.provider_id = u.id
+             WHERE a.is_cancelled = 0
+             ORDER BY a.appointment_date ASC, a.appointment_time ASC'
         );
         $stmt->execute();
 
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        return array_map([$this, 'decryptPatientName'], $rows);
     }
 
     public function findByProvider(int $providerId): array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM appointments
-             WHERE provider_id  = :provider_id
-               AND is_cancelled = 0
-             ORDER BY appointment_date ASC, appointment_time ASC'
+            'SELECT a.*, p.name AS encrypted_patient_name, u.name AS provider_name 
+             FROM appointments a
+             LEFT JOIN patients p ON a.patient_id = p.id
+             LEFT JOIN users u ON a.provider_id = u.id
+             WHERE a.provider_id  = :provider_id
+               AND a.is_cancelled = 0
+             ORDER BY a.appointment_date ASC, a.appointment_time ASC'
         );
         $stmt->execute([
             'provider_id' => $providerId,
         ]);
 
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        return array_map([$this, 'decryptPatientName'], $rows);
     }
 
     public function findByPatient(int $patientId): array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM appointments
-             WHERE patient_id   = :patient_id
-               AND is_cancelled = 0
-             ORDER BY appointment_date ASC, appointment_time ASC'
+            'SELECT a.*, p.name AS encrypted_patient_name, u.name AS provider_name 
+             FROM appointments a
+             LEFT JOIN patients p ON a.patient_id = p.id
+             LEFT JOIN users u ON a.provider_id = u.id
+             WHERE a.patient_id   = :patient_id
+               AND a.is_cancelled = 0
+             ORDER BY a.appointment_date ASC, a.appointment_time ASC'
         );
         $stmt->execute([
             'patient_id' => $patientId,
         ]);
 
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        return array_map([$this, 'decryptPatientName'], $rows);
     }
 
     public function findById(int $id): ?array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM appointments
-             WHERE id        = :id
+            'SELECT a.*, p.name AS encrypted_patient_name, u.name AS provider_name 
+             FROM appointments a
+             LEFT JOIN patients p ON a.patient_id = p.id
+             LEFT JOIN users u ON a.provider_id = u.id
+             WHERE a.id = :id
              LIMIT 1'
         );
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
 
-        return $row ?: null;
+        return $row ? $this->decryptPatientName($row) : null;
     }
 
     /**
