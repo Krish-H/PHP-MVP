@@ -174,4 +174,23 @@ class UserRepository {
             'id' => $userId
         ]);
     }
+
+    public function getAvailablePatientUsers() {
+        $stmt = $this->db->prepare('
+            SELECT id, name, email 
+            FROM users 
+            WHERE role_id = :role_id 
+              AND is_active = 1 
+              AND deleted_at IS NULL 
+              AND id NOT IN (
+                  SELECT patient_user_id 
+                  FROM patients 
+                  WHERE patient_user_id IS NOT NULL 
+                    AND is_deleted = 0
+              )
+            ORDER BY name ASC
+        ');
+        $stmt->execute(['role_id' => \App\Config\Roles::PATIENT]);
+        return $stmt->fetchAll();
+    }
 }
