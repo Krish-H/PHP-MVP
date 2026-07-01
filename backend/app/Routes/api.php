@@ -35,7 +35,8 @@ $router->put('/api/patients/{id}', 'PatientController@update', [TenantMiddleware
 $router->delete('/api/patients/{id}', 'PatientController@destroy', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
 
 // Appointment management
-$router->get('/api/appointments', 'AppointmentController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
+// Added Roles::RECEPTIONIST — needed for Calendar module to fetch appointments
+$router->get('/api/appointments', 'AppointmentController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT, Roles::RECEPTIONIST]]]);
 $router->post('/api/appointments', 'AppointmentController@store', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
 $router->get('/api/appointments/{id}', 'AppointmentController@show', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
 $router->put('/api/appointments/{id}', 'AppointmentController@update', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
