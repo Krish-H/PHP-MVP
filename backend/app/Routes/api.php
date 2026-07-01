@@ -1,3 +1,4 @@
+
 <?php
 
 // api.php
@@ -25,8 +26,8 @@ $router->get('/api/csrf-token', 'AuthController@csrfToken', [TenantMiddleware::c
 $router->post('/api/logout', 'AuthController@logout', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class]);
 $router->get('/api/profile', 'AuthController@profile', [TenantMiddleware::class, AuthMiddleware::class]);
 $router->post('/api/change-password', 'AuthController@changePassword', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class]);
-// $router->get('/api/dashboard', 'DashboardController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
-$router->get('/api/dashboard', 'DashboardController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::NURSE]]]);
+$router->get('/api/dashboard', 'DashboardController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER]]]);
+
 // Patient management
 $router->get('/api/patient-users', 'PatientController@patientUsers', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
 $router->get('/api/patients', 'PatientController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
@@ -36,8 +37,7 @@ $router->put('/api/patients/{id}', 'PatientController@update', [TenantMiddleware
 $router->delete('/api/patients/{id}', 'PatientController@destroy', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
 
 // Appointment management
-// Added Roles::RECEPTIONIST — needed for Calendar module to fetch appointments
-$router->get('/api/appointments', 'AppointmentController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT, Roles::RECEPTIONIST]]]);
+$router->get('/api/appointments', 'AppointmentController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
 $router->post('/api/appointments', 'AppointmentController@store', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
 $router->get('/api/appointments/{id}', 'AppointmentController@show', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
 $router->put('/api/appointments/{id}', 'AppointmentController@update', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE, Roles::PATIENT]]]);
@@ -71,9 +71,8 @@ $router->patch('/api/staff/{id}/deactivate', 'DoctorController@deactivate', [Ten
 $router->delete('/api/staff/{id}', 'DoctorController@destroy', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 
 // User management
-// $router->get('/api/users', 'UserController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
+$router->get('/api/users', 'UserController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->get('/api/users/{id}', 'UserController@show', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
-$router->get('/api/users', 'UserController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::NURSE]]]);
 $router->post('/api/users', 'UserController@store', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->put('/api/users/{id}', 'UserController@update', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
 $router->patch('/api/users/{id}/activate', 'UserController@activate', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN]]]);
@@ -95,4 +94,3 @@ $router->delete('/api/prescriptions/{id}/items/{item_id}', 'PrescriptionControll
 // Pharmacy operations (pharmacist APIs)
 $router->post('/api/prescriptions/{id}/verify', 'PrescriptionController@verify', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PHARMACIST]]]);
 $router->post('/api/prescriptions/{id}/dispense', 'PrescriptionController@dispense', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PHARMACIST]]]);
-
