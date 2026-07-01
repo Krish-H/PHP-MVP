@@ -130,10 +130,16 @@ class CalendarService {
 
     private function formatAppointments(array $rows): array {
         return array_map(function ($row) {
+            $patientName = !empty($row['patient_name_enc'])
+                ? AES::decrypt($row['patient_name_enc'], $this->aesKey)
+                : null;
+
             return [
                 'id'               => (int) $row['id'],
                 'patient_id'       => (int) $row['patient_id'],
+                'patient_name'     => $patientName,
                 'provider_id'      => (int) $row['provider_id'],
+                'provider_name'    => $row['provider_name'] ?? null,
                 'appointment_date' => $row['appointment_date'],
                 'appointment_time' => $row['appointment_time'],
                 'status'           => $row['status'],

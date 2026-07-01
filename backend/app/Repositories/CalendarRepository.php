@@ -36,14 +36,18 @@ class CalendarRepository {
     public function fetchByDate(string $date, ?int $providerId = null): array {
         if ($providerId !== null) {
             $stmt = $this->db->prepare(
-                'SELECT id, patient_id, provider_id,
-                        appointment_date, appointment_time,
-                        status, notes, is_cancelled
-                 FROM   appointments
-                 WHERE  appointment_date = :date
-                   AND  provider_id      = :provider_id
-                   AND  is_cancelled     = 0
-                 ORDER BY appointment_time ASC'
+                'SELECT a.id, a.patient_id, a.provider_id,
+                        a.appointment_date, a.appointment_time,
+                        a.status, a.notes, a.is_cancelled,
+                        p.name AS patient_name_enc,
+                        u.name AS provider_name
+                 FROM   appointments a
+                 LEFT JOIN patients p ON p.id = a.patient_id AND p.is_deleted = 0
+                 LEFT JOIN users u ON u.id = a.provider_id
+                 WHERE  a.appointment_date = :date
+                   AND  a.provider_id      = :provider_id
+                   AND  a.is_cancelled     = 0
+                 ORDER BY a.appointment_time ASC'
             );
             $stmt->execute([
                 'date'        => $date,
@@ -51,17 +55,19 @@ class CalendarRepository {
             ]);
         } else {
             $stmt = $this->db->prepare(
-                'SELECT id, patient_id, provider_id,
-                        appointment_date, appointment_time,
-                        status, notes, is_cancelled
-                 FROM   appointments
-                 WHERE  appointment_date = :date
-                   AND  is_cancelled     = 0
-                 ORDER BY appointment_time ASC'
+                'SELECT a.id, a.patient_id, a.provider_id,
+                        a.appointment_date, a.appointment_time,
+                        a.status, a.notes, a.is_cancelled,
+                        p.name AS patient_name_enc,
+                        u.name AS provider_name
+                 FROM   appointments a
+                 LEFT JOIN patients p ON p.id = a.patient_id AND p.is_deleted = 0
+                 LEFT JOIN users u ON u.id = a.provider_id
+                 WHERE  a.appointment_date = :date
+                   AND  a.is_cancelled     = 0
+                 ORDER BY a.appointment_time ASC'
             );
-            $stmt->execute([
-                'date'      => $date,
-            ]);
+            $stmt->execute(['date' => $date]);
         }
 
         return $stmt->fetchAll();
@@ -84,14 +90,18 @@ class CalendarRepository {
     public function fetchByRange(string $startDate, string $endDate, ?int $providerId = null): array {
         if ($providerId !== null) {
             $stmt = $this->db->prepare(
-                'SELECT id, patient_id, provider_id,
-                        appointment_date, appointment_time,
-                        status, notes, is_cancelled
-                 FROM   appointments
-                 WHERE  appointment_date BETWEEN :start_date AND :end_date
-                   AND  provider_id      = :provider_id
-                   AND  is_cancelled     = 0
-                 ORDER BY appointment_date ASC, appointment_time ASC'
+                'SELECT a.id, a.patient_id, a.provider_id,
+                        a.appointment_date, a.appointment_time,
+                        a.status, a.notes, a.is_cancelled,
+                        p.name AS patient_name_enc,
+                        u.name AS provider_name
+                 FROM   appointments a
+                 LEFT JOIN patients p ON p.id = a.patient_id AND p.is_deleted = 0
+                 LEFT JOIN users u ON u.id = a.provider_id
+                 WHERE  a.appointment_date BETWEEN :start_date AND :end_date
+                   AND  a.provider_id      = :provider_id
+                   AND  a.is_cancelled     = 0
+                 ORDER BY a.appointment_date ASC, a.appointment_time ASC'
             );
             $stmt->execute([
                 'start_date'  => $startDate,
@@ -100,13 +110,17 @@ class CalendarRepository {
             ]);
         } else {
             $stmt = $this->db->prepare(
-                'SELECT id, patient_id, provider_id,
-                        appointment_date, appointment_time,
-                        status, notes, is_cancelled
-                 FROM   appointments
-                 WHERE  appointment_date BETWEEN :start_date AND :end_date
-                   AND  is_cancelled     = 0
-                 ORDER BY appointment_date ASC, appointment_time ASC'
+                'SELECT a.id, a.patient_id, a.provider_id,
+                        a.appointment_date, a.appointment_time,
+                        a.status, a.notes, a.is_cancelled,
+                        p.name AS patient_name_enc,
+                        u.name AS provider_name
+                 FROM   appointments a
+                 LEFT JOIN patients p ON p.id = a.patient_id AND p.is_deleted = 0
+                 LEFT JOIN users u ON u.id = a.provider_id
+                 WHERE  a.appointment_date BETWEEN :start_date AND :end_date
+                   AND  a.is_cancelled     = 0
+                 ORDER BY a.appointment_date ASC, a.appointment_time ASC'
             );
             $stmt->execute([
                 'start_date' => $startDate,
