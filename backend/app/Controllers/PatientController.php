@@ -20,6 +20,15 @@ class PatientController {
         Response::json(['patients' => $patients], 200);
     }
 
+    public function patientUsers() {
+        try {
+            $users = $this->patientService->getAvailablePatientUsers();
+            Response::json(['users' => $users], 200);
+        } catch (Exception $e) {
+            Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
+        }
+    }
+
     public function store() {
         $data = Request::body();
 

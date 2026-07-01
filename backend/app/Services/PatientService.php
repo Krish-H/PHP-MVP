@@ -25,6 +25,14 @@ class PatientService {
     }
 
     // ----------------------------------------------------------------
+    // Called by PatientController@patientUsers
+    // GET /api/patient-users
+    // ----------------------------------------------------------------
+    public function getAvailablePatientUsers() {
+        return $this->userRepo->getAvailablePatientUsers();
+    }
+
+    // ----------------------------------------------------------------
     // Called by PatientController@show
     // GET /api/patients/{id}
     // ----------------------------------------------------------------
@@ -43,26 +51,32 @@ class PatientService {
     // POST /api/patients
     // ----------------------------------------------------------------
     public function addPatient($data, $userId) {
+        if (empty($data['patient_user_id'])) {
+            throw new Exception("Field 'patient_user_id' is required", 422);
+        }
+
+        $patientUserId = (int)$data['patient_user_id'];
+        $user = $this->userRepo->findByIdWithTenant($patientUserId);
+        
+        if (!$user) {
+            throw new Exception("Patient user account not found or does not belong to this tenant", 404);
+        }
+        if ((int)$user['role_id'] !== \App\Config\Roles::PATIENT) {
+            throw new Exception("User account must have the PATIENT role", 422);
+        }
+        if ($this->patientRepo->isPatientUserLinkedToAnother($patientUserId)) {
+            throw new Exception("User account is already linked to a patient record", 422);
+        }
+
+        // Populate name and email from the linked user account
+        $data['name'] = $user['name'];
+        $data['email'] = $user['email'];
+
         // Validate required fields
-        $required = ['name', 'dob', 'gender', 'phone', 'email'];
+        $required = ['name', 'dob', 'gender', 'phone', 'email', 'patient_user_id'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
                 throw new Exception("Field '$field' is required", 422);
-            }
-        }
-
-        if (!empty($data['patient_user_id'])) {
-            $patientUserId = (int)$data['patient_user_id'];
-            $user = $this->userRepo->findByIdWithTenant($patientUserId);
-            
-            if (!$user) {
-                throw new Exception("Patient user account not found or does not belong to this tenant", 404);
-            }
-            if ((int)$user['role_id'] !== \App\Config\Roles::PATIENT) {
-                throw new Exception("User account must have the PATIENT role", 422);
-            }
-            if ($this->patientRepo->isPatientUserLinkedToAnother($patientUserId)) {
-                throw new Exception("User account is already linked to a patient record", 422);
             }
         }
 
