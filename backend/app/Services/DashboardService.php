@@ -26,6 +26,8 @@ class DashboardService {
         $totalInvoicesCount = $pendingSummary['pending_count'] + $paidSummary['paid_count'];
         $totalRevenue = $paidSummary['paid_amount'] + $pendingSummary['pending_amount'];
 
+        $recentAppointments = $this->dashboardRepo->getRecentAppointments(5);
+
         return [
             'total_patients' => $totalPatients,
             'total_appointments' => $totalAppointments,
@@ -35,7 +37,8 @@ class DashboardService {
             'total_invoices' => $totalInvoicesCount,
             'pending_invoices' => $pendingSummary['pending_count'],
             'total_revenue' => $totalRevenue,
-            'pending_amount' => $pendingSummary['pending_amount']
+            'pending_amount' => $pendingSummary['pending_amount'],
+            'recent_appointments' => $recentAppointments
         ];
     }
 }

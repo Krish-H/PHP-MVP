@@ -39,11 +39,11 @@ class CalendarRepository {
                 'SELECT a.id, a.patient_id, a.provider_id,
                         a.appointment_date, a.appointment_time,
                         a.status, a.notes, a.is_cancelled,
-                        p.name AS patient_name_enc,
+                        p.name AS encrypted_patient_name,
                         u.name AS provider_name
                  FROM   appointments a
-                 LEFT JOIN patients p ON p.id = a.patient_id AND p.is_deleted = 0
-                 LEFT JOIN users u ON u.id = a.provider_id
+                 LEFT JOIN patients p ON a.patient_id = p.id
+                 LEFT JOIN users u ON a.provider_id = u.id
                  WHERE  a.appointment_date = :date
                    AND  a.provider_id      = :provider_id
                    AND  a.is_cancelled     = 0
@@ -58,11 +58,11 @@ class CalendarRepository {
                 'SELECT a.id, a.patient_id, a.provider_id,
                         a.appointment_date, a.appointment_time,
                         a.status, a.notes, a.is_cancelled,
-                        p.name AS patient_name_enc,
+                        p.name AS encrypted_patient_name,
                         u.name AS provider_name
                  FROM   appointments a
-                 LEFT JOIN patients p ON p.id = a.patient_id AND p.is_deleted = 0
-                 LEFT JOIN users u ON u.id = a.provider_id
+                 LEFT JOIN patients p ON a.patient_id = p.id
+                 LEFT JOIN users u ON a.provider_id = u.id
                  WHERE  a.appointment_date = :date
                    AND  a.is_cancelled     = 0
                  ORDER BY a.appointment_time ASC'
@@ -93,11 +93,11 @@ class CalendarRepository {
                 'SELECT a.id, a.patient_id, a.provider_id,
                         a.appointment_date, a.appointment_time,
                         a.status, a.notes, a.is_cancelled,
-                        p.name AS patient_name_enc,
+                        p.name AS encrypted_patient_name,
                         u.name AS provider_name
                  FROM   appointments a
-                 LEFT JOIN patients p ON p.id = a.patient_id AND p.is_deleted = 0
-                 LEFT JOIN users u ON u.id = a.provider_id
+                 LEFT JOIN patients p ON a.patient_id = p.id
+                 LEFT JOIN users u ON a.provider_id = u.id
                  WHERE  a.appointment_date BETWEEN :start_date AND :end_date
                    AND  a.provider_id      = :provider_id
                    AND  a.is_cancelled     = 0
@@ -113,11 +113,11 @@ class CalendarRepository {
                 'SELECT a.id, a.patient_id, a.provider_id,
                         a.appointment_date, a.appointment_time,
                         a.status, a.notes, a.is_cancelled,
-                        p.name AS patient_name_enc,
+                        p.name AS encrypted_patient_name,
                         u.name AS provider_name
                  FROM   appointments a
-                 LEFT JOIN patients p ON p.id = a.patient_id AND p.is_deleted = 0
-                 LEFT JOIN users u ON u.id = a.provider_id
+                 LEFT JOIN patients p ON a.patient_id = p.id
+                 LEFT JOIN users u ON a.provider_id = u.id
                  WHERE  a.appointment_date BETWEEN :start_date AND :end_date
                    AND  a.is_cancelled     = 0
                  ORDER BY a.appointment_date ASC, a.appointment_time ASC'

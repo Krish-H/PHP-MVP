@@ -117,7 +117,7 @@ class UserRepository {
         ]);
     }
 
-    public function getUsers($page = 1, $limit = 10, $name = null, $email = null) {
+    public function getUsers($page = 1, $limit = 10, $name = null, $email = null, $excludeRole = null) {
         $where = ['deleted_at IS NULL'];
         $params = [];
 
@@ -129,6 +129,11 @@ class UserRepository {
         if ($email !== null && trim($email) !== '') {
             $where[] = 'email LIKE :email';
             $params['email'] = '%' . trim($email) . '%';
+        }
+        
+        if ($excludeRole !== null) {
+            $where[] = 'role_id != :exclude_role';
+            $params['exclude_role'] = (int)$excludeRole;
         }
 
         $whereSql = implode(' AND ', $where);

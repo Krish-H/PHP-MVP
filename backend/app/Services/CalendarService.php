@@ -130,9 +130,11 @@ class CalendarService {
 
     private function formatAppointments(array $rows): array {
         return array_map(function ($row) {
-            $patientName = !empty($row['patient_name_enc'])
-                ? AES::decrypt($row['patient_name_enc'], $this->aesKey)
-                : null;
+            $patientName = null;
+            if (!empty($row['encrypted_patient_name'])) {
+                $decrypted = \App\Security\AES::decrypt($row['encrypted_patient_name'], $this->aesKey);
+                $patientName = $decrypted !== false ? $decrypted : null;
+            }
 
             return [
                 'id'               => (int) $row['id'],

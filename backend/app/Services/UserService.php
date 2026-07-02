@@ -15,10 +15,10 @@ class UserService {
         $this->userRepo = new UserRepository();
     }
 
-    public function listUsers($page = 1, $limit = 10, $name = null, $email = null) {
+    public function listUsers($page = 1, $limit = 10, $name = null, $email = null, $excludeRole = null) {
         $page = max(1, (int)$page);
         $limit = max(1, (int)$limit);
-        return $this->userRepo->getUsers($page, $limit, $name, $email);
+        return $this->userRepo->getUsers($page, $limit, $name, $email, $excludeRole);
     }
 
     public function getUser($id) {
