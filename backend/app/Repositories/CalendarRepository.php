@@ -67,9 +67,7 @@ class CalendarRepository {
                    AND  a.is_cancelled     = 0
                  ORDER BY a.appointment_time ASC'
             );
-            $stmt->execute([
-                'date'      => $date,
-            ]);
+            $stmt->execute(['date' => $date]);
         }
 
         return $stmt->fetchAll();
