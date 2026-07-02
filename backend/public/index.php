@@ -32,7 +32,8 @@ Env::load(__DIR__ . '/../.env');
 // Handle CORS
 
 $allowedOrigins = [
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "http://lvh.me:3000"
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
