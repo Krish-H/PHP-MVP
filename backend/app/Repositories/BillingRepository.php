@@ -27,7 +27,7 @@ class BillingRepository {
 
     public function findAll(): array {
         $stmt = $this->db->prepare('
-            SELECT * FROM invoices
+            SELECT id, patient_id, invoice_number, amount, status, created_at, updated_at FROM invoices
             ORDER BY created_at DESC
         ');
         $stmt->execute();
@@ -36,7 +36,7 @@ class BillingRepository {
 
     public function findAllForPatient(int $patientId): array {
         $stmt = $this->db->prepare('
-            SELECT * FROM invoices
+            SELECT id, patient_id, invoice_number, amount, status, created_at, updated_at FROM invoices
             WHERE patient_id = :patient_id
             ORDER BY created_at DESC
         ');
@@ -50,7 +50,7 @@ class BillingRepository {
 
     public function findById(int $id) {
         $stmt = $this->db->prepare('
-            SELECT * FROM invoices
+            SELECT id, patient_id, invoice_number, amount, status, created_at, updated_at FROM invoices
             WHERE id = :id
             LIMIT 1
         ');

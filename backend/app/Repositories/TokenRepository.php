@@ -28,7 +28,7 @@ class TokenRepository {
         $tokenHash = $this->hashToken($refreshToken);
 
         $stmt = $this->db->prepare('
-            SELECT * FROM refresh_tokens 
+            SELECT id, user_id, token_hash, expires_at, revoked FROM refresh_tokens 
             WHERE token_hash = :token_hash 
               AND revoked = 0 
               AND expires_at > NOW() 

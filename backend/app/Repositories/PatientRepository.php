@@ -32,7 +32,7 @@ class PatientRepository {
 
     public function findAll(): array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM patients
+            'SELECT id, user_id, patient_user_id, name, dob, gender, phone, email, address, blood_group, medical_history, emergency_contact, created_at, updated_at FROM patients
              WHERE is_deleted = 0
              ORDER BY created_at DESC'
         );
@@ -46,7 +46,7 @@ class PatientRepository {
 
     public function findById(int $id): ?array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM patients
+            'SELECT id, user_id, patient_user_id, name, dob, gender, phone, email, address, blood_group, medical_history, emergency_contact, created_at, updated_at FROM patients
              WHERE id         = :id
                AND is_deleted = 0
              LIMIT 1'
@@ -63,7 +63,7 @@ class PatientRepository {
 
     public function findByUserId(int $userId): ?array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM patients
+            'SELECT id, user_id, patient_user_id, name, dob, gender, phone, email, address, blood_group, medical_history, emergency_contact, created_at, updated_at FROM patients
              WHERE user_id    = :user_id
                AND is_deleted = 0
              LIMIT 1'
@@ -80,7 +80,7 @@ class PatientRepository {
 
     public function findByPatientUserId(int $userId): ?array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM patients
+            'SELECT id, user_id, patient_user_id, name, dob, gender, phone, email, address, blood_group, medical_history, emergency_contact, created_at, updated_at FROM patients
              WHERE patient_user_id = :patient_user_id
                AND is_deleted = 0
              LIMIT 1'
