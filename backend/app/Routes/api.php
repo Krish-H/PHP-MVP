@@ -29,6 +29,7 @@ $router->post('/api/change-password', 'AuthController@changePassword', [TenantMi
 $router->get('/api/dashboard', 'DashboardController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::ADMIN, Roles::PROVIDER, Roles::NURSE]]]);
 // Patient management
 $router->get('/api/patient-users', 'PatientController@patientUsers', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
+$router->get('/api/patients/stats', 'PatientController@stats', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
 $router->get('/api/patients', 'PatientController@index', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
 $router->post('/api/patients', 'PatientController@store', [TenantMiddleware::class, AuthMiddleware::class, CsrfMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);
 $router->get('/api/patients/{id}', 'PatientController@show', [TenantMiddleware::class, AuthMiddleware::class, [RoleMiddleware::class, [Roles::PROVIDER, Roles::NURSE]]]);

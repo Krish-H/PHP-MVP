@@ -26,8 +26,9 @@ class UserController {
             $name = isset($_GET['name']) ? $_GET['name'] : null;
             $email = isset($_GET['email']) ? $_GET['email'] : null;
             $excludeRole = isset($_GET['exclude_role']) ? (int)$_GET['exclude_role'] : null;
+            $roleId = isset($_GET['role_id']) ? (int)$_GET['role_id'] : null;
 
-            $result = $this->userService->listUsers($page, $limit, $name, $email, $excludeRole);
+            $result = $this->userService->listUsers($page, $limit, $name, $email, $excludeRole, $roleId);
 
             Response::json($result, 200);
         } catch (Exception $e) {

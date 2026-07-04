@@ -43,55 +43,112 @@ class AppointmentRepository {
     // READ
     // ----------------------------------------------------------------
 
-    public function findAll(): array {
-        $stmt = $this->db->prepare(
-            'SELECT a.*, p.name AS encrypted_patient_name, u.name AS provider_name 
-             FROM appointments a
-             LEFT JOIN patients p ON a.patient_id = p.id
-             LEFT JOIN users u ON a.provider_id = u.id
-             WHERE a.is_cancelled = 0
-             ORDER BY a.appointment_date ASC, a.appointment_time ASC'
-        );
+    public function findAll(int $page = 1, int $limit = 10, string $status = ''): array {
+        $where = 'a.is_cancelled = 0';
+        $params = [];
+        if ($status !== '' && $status !== 'all') {
+            $where .= ' AND a.status = :status';
+            $params['status'] = $status;
+        }
+
+        $countStmt = $this->db->prepare("SELECT COUNT(*) FROM appointments a WHERE $where");
+        $countStmt->execute($params);
+        $total = (int)$countStmt->fetchColumn();
+
+        $offset = ($page - 1) * $limit;
+        $sql = "SELECT a.*, p.name AS encrypted_patient_name, u.name AS provider_name 
+                FROM appointments a
+                LEFT JOIN patients p ON a.patient_id = p.id
+                LEFT JOIN users u ON a.provider_id = u.id
+                WHERE $where
+                ORDER BY a.appointment_date ASC, a.appointment_time ASC
+                LIMIT :limit OFFSET :offset";
+        
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue(":$key", $val);
+        }
+        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
         $stmt->execute();
 
         $rows = $stmt->fetchAll();
-        return array_map([$this, 'decryptPatientName'], $rows);
+        return [
+            'data' => array_map([$this, 'decryptPatientName'], $rows),
+            'total' => $total
+        ];
     }
 
-    public function findByProvider(int $providerId): array {
-        $stmt = $this->db->prepare(
-            'SELECT a.*, p.name AS encrypted_patient_name, u.name AS provider_name 
-             FROM appointments a
-             LEFT JOIN patients p ON a.patient_id = p.id
-             LEFT JOIN users u ON a.provider_id = u.id
-             WHERE a.provider_id  = :provider_id
-               AND a.is_cancelled = 0
-             ORDER BY a.appointment_date ASC, a.appointment_time ASC'
-        );
-        $stmt->execute([
-            'provider_id' => $providerId,
-        ]);
+    public function findByProvider(int $providerId, int $page = 1, int $limit = 10, string $status = ''): array {
+        $where = 'a.provider_id = :provider_id AND a.is_cancelled = 0';
+        $params = ['provider_id' => $providerId];
+        if ($status !== '' && $status !== 'all') {
+            $where .= ' AND a.status = :status';
+            $params['status'] = $status;
+        }
+
+        $countStmt = $this->db->prepare("SELECT COUNT(*) FROM appointments a WHERE $where");
+        $countStmt->execute($params);
+        $total = (int)$countStmt->fetchColumn();
+
+        $offset = ($page - 1) * $limit;
+        $sql = "SELECT a.*, p.name AS encrypted_patient_name, u.name AS provider_name 
+                FROM appointments a
+                LEFT JOIN patients p ON a.patient_id = p.id
+                LEFT JOIN users u ON a.provider_id = u.id
+                WHERE $where
+                ORDER BY a.appointment_date ASC, a.appointment_time ASC
+                LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue(":$key", $val);
+        }
+        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
 
         $rows = $stmt->fetchAll();
-        return array_map([$this, 'decryptPatientName'], $rows);
+        return [
+            'data' => array_map([$this, 'decryptPatientName'], $rows),
+            'total' => $total
+        ];
     }
 
-    public function findByPatient(int $patientId): array {
-        $stmt = $this->db->prepare(
-            'SELECT a.*, p.name AS encrypted_patient_name, u.name AS provider_name 
-             FROM appointments a
-             LEFT JOIN patients p ON a.patient_id = p.id
-             LEFT JOIN users u ON a.provider_id = u.id
-             WHERE a.patient_id   = :patient_id
-               AND a.is_cancelled = 0
-             ORDER BY a.appointment_date ASC, a.appointment_time ASC'
-        );
-        $stmt->execute([
-            'patient_id' => $patientId,
-        ]);
+    public function findByPatient(int $patientId, int $page = 1, int $limit = 10, string $status = ''): array {
+        $where = 'a.patient_id = :patient_id AND a.is_cancelled = 0';
+        $params = ['patient_id' => $patientId];
+        if ($status !== '' && $status !== 'all') {
+            $where .= ' AND a.status = :status';
+            $params['status'] = $status;
+        }
+
+        $countStmt = $this->db->prepare("SELECT COUNT(*) FROM appointments a WHERE $where");
+        $countStmt->execute($params);
+        $total = (int)$countStmt->fetchColumn();
+
+        $offset = ($page - 1) * $limit;
+        $sql = "SELECT a.*, p.name AS encrypted_patient_name, u.name AS provider_name 
+                FROM appointments a
+                LEFT JOIN patients p ON a.patient_id = p.id
+                LEFT JOIN users u ON a.provider_id = u.id
+                WHERE $where
+                ORDER BY a.appointment_date ASC, a.appointment_time ASC
+                LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue(":$key", $val);
+        }
+        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
 
         $rows = $stmt->fetchAll();
-        return array_map([$this, 'decryptPatientName'], $rows);
+        return [
+            'data' => array_map([$this, 'decryptPatientName'], $rows),
+            'total' => $total
+        ];
     }
 
     public function findById(int $id): ?array {

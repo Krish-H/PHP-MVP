@@ -48,8 +48,8 @@ class AppointmentService {
         return $appointment;
     }
 
-    public function listAppointments(): array {
-        return $this->appointmentRepo->findAll();
+    public function listAppointments(int $page = 1, int $limit = 10, string $status = ''): array {
+        return $this->appointmentRepo->findAll($page, $limit, $status);
     }
 
     public function updateAppointment(int $id, array $data): void {

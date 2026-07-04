@@ -16,14 +16,32 @@ class PatientController {
     }
 
     public function index() {
-        $patients = $this->patientService->listPatients();
-        Response::json(['patients' => $patients], 200);
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+        $search = isset($_GET['search']) ? $_GET['search'] : '';
+        $gender = isset($_GET['gender']) ? $_GET['gender'] : '';
+        $status = isset($_GET['status']) ? $_GET['status'] : '';
+
+        $result = $this->patientService->listPatients($page, $limit, $search, $gender, $status);
+        Response::json([
+            'patients' => $result['data'],
+            'total' => $result['total']
+        ], 200);
     }
 
     public function patientUsers() {
         try {
             $users = $this->patientService->getAvailablePatientUsers();
             Response::json(['users' => $users], 200);
+        } catch (Exception $e) {
+            Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
+        }
+    }
+
+    public function stats() {
+        try {
+            $stats = $this->patientService->getPatientStats();
+            Response::json(['stats' => $stats], 200);
         } catch (Exception $e) {
             Response::json(['error' => $e->getMessage()], $e->getCode() ?: 500);
         }
