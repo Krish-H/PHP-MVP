@@ -12,13 +12,13 @@ class UserRepository {
     }
 
     public function findByEmail($email) {
-        $stmt = $this->db->prepare('SELECT * FROM users WHERE email = :email AND is_active = 1 AND deleted_at IS NULL LIMIT 1');
+        $stmt = $this->db->prepare('SELECT id, role_id, email, password_hash, name, is_active FROM users WHERE email = :email AND is_active = 1 AND deleted_at IS NULL LIMIT 1');
         $stmt->execute(['email' => $email]);
         return $stmt->fetch();
     }
 
     public function findById($id) {
-        $stmt = $this->db->prepare('SELECT * FROM users WHERE id = :id AND deleted_at IS NULL LIMIT 1');
+        $stmt = $this->db->prepare('SELECT id, role_id, email, name, is_active, created_at, updated_at FROM users WHERE id = :id AND deleted_at IS NULL LIMIT 1');
         $stmt->execute(['id' => $id]);
         return $stmt->fetch();
     }
@@ -117,7 +117,7 @@ class UserRepository {
         ]);
     }
 
-    public function getUsers($page = 1, $limit = 10, $name = null, $email = null, $excludeRole = null) {
+    public function getUsers($page = 1, $limit = 10, $name = null, $email = null, $excludeRole = null, $roleId = null) {
         $where = ['deleted_at IS NULL'];
         $params = [];
 
@@ -134,6 +134,11 @@ class UserRepository {
         if ($excludeRole !== null) {
             $where[] = 'role_id != :exclude_role';
             $params['exclude_role'] = (int)$excludeRole;
+        }
+
+        if ($roleId !== null) {
+            $where[] = 'role_id = :role_id';
+            $params['role_id'] = (int)$roleId;
         }
 
         $whereSql = implode(' AND ', $where);

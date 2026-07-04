@@ -114,6 +114,7 @@ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP,
 
 INDEX idx_patients_user (user_id),
+INDEX idx_patients_is_deleted (is_deleted),
 
 CONSTRAINT fk_patients_user
     FOREIGN KEY (user_id)
@@ -159,6 +160,7 @@ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 INDEX idx_appt_patient (patient_id),
 INDEX idx_appt_provider (provider_id),
 INDEX idx_appt_date (appointment_date),
+INDEX idx_appt_date_provider_cancelled (appointment_date, provider_id, is_cancelled),
 
 UNIQUE KEY uk_provider_slot (
     provider_id,

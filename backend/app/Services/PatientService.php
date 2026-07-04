@@ -20,8 +20,8 @@ class PatientService {
     // Called by PatientController@index
     // GET /api/patients
     // ----------------------------------------------------------------
-    public function listPatients() {
-        return $this->patientRepo->findAll();
+    public function listPatients(int $page = 1, int $limit = 10, string $search = '', string $gender = '', string $status = '') {
+        return $this->patientRepo->findAll($page, $limit, $search, $gender, $status);
     }
 
     // ----------------------------------------------------------------
@@ -30,6 +30,14 @@ class PatientService {
     // ----------------------------------------------------------------
     public function getAvailablePatientUsers() {
         return $this->userRepo->getAvailablePatientUsers();
+    }
+
+    // ----------------------------------------------------------------
+    // Called by PatientController@stats
+    // GET /api/patients/stats
+    // ----------------------------------------------------------------
+    public function getPatientStats() {
+        return $this->patientRepo->getPatientStats();
     }
 
     // ----------------------------------------------------------------

@@ -30,23 +30,82 @@ class PatientRepository {
     // READ
     // ----------------------------------------------------------------
 
-    public function findAll(): array {
+    public function getPatientStats(): array {
+        $stats = [
+            'total' => 0,
+            'active' => 0,
+            'new_this_month' => 0,
+            'added_today' => 0
+        ];
+
+        $stmt = $this->db->query("SELECT COUNT(*) FROM patients WHERE is_deleted = 0");
+        $stats['total'] = (int) $stmt->fetchColumn();
+        $stats['active'] = $stats['total']; // all non-deleted are considered active
+
+        $stmtMonth = $this->db->query("SELECT COUNT(*) FROM patients WHERE is_deleted = 0 AND MONTH(created_at) = MONTH(CURRENT_DATE()) AND YEAR(created_at) = YEAR(CURRENT_DATE())");
+        $stats['new_this_month'] = (int) $stmtMonth->fetchColumn();
+
+        $stmtToday = $this->db->query("SELECT COUNT(*) FROM patients WHERE is_deleted = 0 AND DATE(created_at) = CURRENT_DATE()");
+        $stats['added_today'] = (int) $stmtToday->fetchColumn();
+
+        return $stats;
+    }
+
+    public function findAll(int $page = 1, int $limit = 10, string $search = '', string $gender = '', string $status = ''): array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM patients
+            'SELECT id, user_id, patient_user_id, name, dob, gender, phone, email, address, blood_group, medical_history, emergency_contact, created_at, updated_at FROM patients
              WHERE is_deleted = 0
              ORDER BY created_at DESC'
         );
         $stmt->execute();
         $patients = $stmt->fetchAll();
 
-        return array_map(function ($patient) {
+        // Decrypt all
+        $decryptedPatients = array_map(function ($patient) {
             return $this->decryptPhi($patient);
         }, $patients);
+
+        // Filter in PHP due to encryption
+        $filtered = array_filter($decryptedPatients, function($p) use ($search, $gender, $status) {
+            $matchSearch = true;
+            if ($search !== '') {
+                $searchLower = strtolower($search);
+                $nameMatch = (isset($p['name']) && strpos(strtolower($p['name']), $searchLower) !== false);
+                $idMatch = (strpos((string)$p['id'], $search) !== false);
+                $phoneMatch = (isset($p['phone']) && strpos($p['phone'], $search) !== false);
+                $matchSearch = $nameMatch || $idMatch || $phoneMatch;
+            }
+            
+            $matchGender = true;
+            if ($gender !== '' && $gender !== 'all') {
+                $matchGender = (isset($p['gender']) && $p['gender'] === $gender);
+            }
+            
+            $matchStatus = true;
+            if ($status !== '' && $status !== 'all') {
+                $matchStatus = (isset($p['status']) && $p['status'] === $status);
+            }
+            
+            return $matchSearch && $matchGender && $matchStatus;
+        });
+
+        // Re-index array after filter
+        $filtered = array_values($filtered);
+        $total = count($filtered);
+
+        // Paginate
+        $offset = ($page - 1) * $limit;
+        $paginated = array_slice($filtered, $offset, $limit);
+
+        return [
+            'data' => $paginated,
+            'total' => $total
+        ];
     }
 
     public function findById(int $id): ?array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM patients
+            'SELECT id, user_id, patient_user_id, name, dob, gender, phone, email, address, blood_group, medical_history, emergency_contact, created_at, updated_at FROM patients
              WHERE id         = :id
                AND is_deleted = 0
              LIMIT 1'
@@ -63,7 +122,7 @@ class PatientRepository {
 
     public function findByUserId(int $userId): ?array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM patients
+            'SELECT id, user_id, patient_user_id, name, dob, gender, phone, email, address, blood_group, medical_history, emergency_contact, created_at, updated_at FROM patients
              WHERE user_id    = :user_id
                AND is_deleted = 0
              LIMIT 1'
@@ -80,7 +139,7 @@ class PatientRepository {
 
     public function findByPatientUserId(int $userId): ?array {
         $stmt = $this->db->prepare(
-            'SELECT * FROM patients
+            'SELECT id, user_id, patient_user_id, name, dob, gender, phone, email, address, blood_group, medical_history, emergency_contact, created_at, updated_at FROM patients
              WHERE patient_user_id = :patient_user_id
                AND is_deleted = 0
              LIMIT 1'

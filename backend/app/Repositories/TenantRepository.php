@@ -33,14 +33,14 @@ class TenantRepository {
 
     public function findBySubdomain($subdomain) {
         $pdo = $this->getMasterConnection();
-        $stmt = $pdo->prepare("SELECT * FROM tenants WHERE subdomain = ? AND status = 'active' LIMIT 1");
+        $stmt = $pdo->prepare("SELECT id, tenant_id, company_name, subdomain, db_name, status, theme_config FROM tenants WHERE subdomain = ? AND status = 'active' LIMIT 1");
         $stmt->execute([$subdomain]);
         return $stmt->fetch();
     }
 
     public function findByTenantId($tenantId) {
         $pdo = $this->getMasterConnection();
-        $stmt = $pdo->prepare("SELECT * FROM tenants WHERE tenant_id = ? AND status = 'active' LIMIT 1");
+        $stmt = $pdo->prepare("SELECT id, tenant_id, company_name, subdomain, db_name, status, theme_config FROM tenants WHERE tenant_id = ? AND status = 'active' LIMIT 1");
         $stmt->execute([$tenantId]);
         return $stmt->fetch();
     }

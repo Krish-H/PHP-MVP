@@ -15,8 +15,15 @@ class AppointmentController {
     }
 
     public function index() {
-        $appointments = $this->appointmentService->listAppointments();
-        Response::json(['appointments' => $appointments], 200);
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+        $status = isset($_GET['status']) ? $_GET['status'] : '';
+
+        $result = $this->appointmentService->listAppointments($page, $limit, $status);
+        Response::json([
+            'appointments' => $result['data'],
+            'total' => $result['total']
+        ], 200);
     }
 
     public function store() {
